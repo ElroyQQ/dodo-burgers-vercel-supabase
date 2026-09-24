@@ -1,0 +1,1244 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dodo Burgers</title>
+<style>
+  :root{
+    --paper:#ffffff;
+    --card:#ffffff;
+    --card-alt:#eef2f6;
+    --ink-900:#0a1420;
+    --ink-600:#4d5f70;
+    --line:#e2e8f0;
+    --accent:#6699cc;
+    --accent-strong:#3f6f9c;
+    --accent-strong-hover:#345f86;
+    --accent-tint:rgba(102,153,204,0.14);
+    --accent-text:var(--accent-strong);
+    --navy-950:#020b14;
+    --shadow: 0 16px 34px -22px rgba(2,11,20,0.35);
+    --header-h: 72px;
+    color-scheme: light;
+  }
+
+  /* dark-scoped panels: flipping these tokens re-themes every component
+     rule below (cards, text, borders) without duplicating a single rule */
+  header, .hero, #story, #visit{
+    --paper:var(--navy-950);
+    --card:#0a1622;
+    --card-alt:#0f2233;
+    --ink-900:#f5f7fa;
+    --ink-600:#9fb3c8;
+    --line:rgba(255,255,255,0.14);
+    --accent-text:var(--accent);
+  }
+
+  *{box-sizing:border-box;}
+  html, body{ height:100%; }
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink-900);
+    font-family:'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size:16px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    overflow:hidden;
+  }
+
+  h1,h2,h3,.display{
+    font-family:'Space Grotesk','Manrope',sans-serif;
+    font-weight:700;
+    letter-spacing:-0.01em;
+    text-wrap:balance;
+    margin:0;
+  }
+
+  .mono{
+    font-family:'Space Mono', 'SF Mono', monospace;
+  }
+
+  a{color:inherit;}
+  button{font-family:inherit;}
+
+  img,svg{max-width:100%;}
+
+  ::selection{ background:var(--accent-tint); color:var(--ink-900); }
+  :focus-visible{ outline:2px solid var(--accent-strong); outline-offset:3px; }
+
+  .wrap{
+    max-width:1180px;
+    margin:0 auto;
+    padding-inline:20px;
+    width:100%;
+  }
+
+  /* ---------- header (fixed: track scrolls sideways beneath it) ---------- */
+  header{
+    position:fixed; top:0; left:0; right:0; z-index:40;
+    backdrop-filter:blur(10px);
+    background:rgba(2,11,20,0.82);
+    border-bottom:1px solid var(--line);
+  }
+  .nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding-block:14px;
+    padding-top:calc(14px + env(safe-area-inset-top,0px));
+    gap:16px;
+  }
+  .logo{ display:flex; align-items:center; gap:10px; text-decoration:none; }
+  .logo-mark{ width:34px; height:34px; flex:none; border-radius:7px; object-fit:cover; border:1px solid var(--line); }
+  .logo-text{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:1.15rem; letter-spacing:-0.01em; color:var(--ink-900); }
+  .logo-text small{ display:block; font-family:'Space Mono',monospace; font-size:0.7rem; letter-spacing:0.1em; color:var(--ink-600); font-weight:400; text-transform:uppercase; }
+  nav.links{ display:flex; gap:22px; font-size:0.92rem; }
+  nav.links a{ text-decoration:none; color:var(--ink-600); transition:color 0.15s; cursor:pointer; }
+  nav.links a:hover{ color:var(--ink-900); }
+  .cart-btn{
+    position:relative;
+    display:inline-flex; align-items:center; gap:8px;
+    background:var(--accent-strong); color:#fff;
+    border:1px solid var(--accent-strong); border-radius:999px;
+    padding:9px 16px; cursor:pointer; font-size:0.88rem; font-weight:600;
+    transition:background 0.15s, transform 0.15s;
+  }
+  .cart-btn:hover{ background:var(--accent-strong-hover); border-color:var(--accent-strong-hover); }
+  .cart-btn:active{ transform:scale(0.97); }
+  .cart-count{
+    background:var(--navy-950); color:#fff;
+    font-family:'Space Mono',monospace; font-size:0.72rem; font-weight:700;
+    min-width:20px; height:20px; border-radius:999px;
+    display:inline-flex; align-items:center; justify-content:center; padding-inline:4px;
+  }
+  @media (max-width:720px){ nav.links{ display:none; } }
+
+  .credits{ position:relative; }
+  .credits > summary{
+    list-style:none; cursor:pointer; font-family:'Space Mono',monospace;
+    font-size:0.7rem; letter-spacing:0.04em; color:var(--ink-600);
+    text-decoration:underline; text-underline-offset:2px; opacity:0.7;
+    transition:opacity 0.15s;
+  }
+  .credits > summary::-webkit-details-marker{ display:none; }
+  .credits:hover > summary, .credits[open] > summary{ opacity:1; color:var(--ink-900); }
+  .credits-panel{
+    position:absolute; top:calc(100% + 12px); right:0; z-index:50;
+    width:min(360px, 82vw); max-height:60vh; overflow-y:auto;
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:14px 16px; box-shadow:var(--shadow);
+    font-size:0.7rem; line-height:1.55; color:var(--ink-600);
+  }
+  @media (max-width:720px){ .credits-panel{ right:-40px; width:min(320px, 88vw); } }
+
+  /* ---------- horizontal track ---------- */
+  .track{
+    position:fixed; inset:0;
+    display:flex; flex-direction:row;
+    height:100%; height:100svh;
+    overflow-x:auto; overflow-y:hidden;
+    scroll-snap-type:x proximity;
+    scroll-behavior:smooth;
+    -webkit-overflow-scrolling:touch;
+  }
+  @media (prefers-reduced-motion:reduce){ .track{ scroll-behavior:auto; } }
+
+  .panel{
+    flex:0 0 100vw;
+    width:100vw;
+    height:100%;
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:calc(var(--header-h) + env(safe-area-inset-top,0px) + 20px) 20px 28px;
+    scroll-snap-align:start;
+  }
+  .panel-inner{
+    width:100%;
+    max-height:100%;
+    overflow-y:auto;
+    overflow-x:hidden;
+    scrollbar-width:none;
+  }
+  .panel-inner::-webkit-scrollbar{ display:none; }
+
+  /* ---------- chase bar: dodo fleeing a chef, tracks scroll progress ---------- */
+  .chase-bar{
+    position:fixed; left:0; right:0; bottom:0; height:56px; z-index:46;
+    pointer-events:none; overflow:hidden;
+    background:linear-gradient(to top, rgba(2,11,20,0.55), rgba(2,11,20,0));
+  }
+  .chase-ground{ position:absolute; left:0; right:0; bottom:9px; height:1px; background:rgba(255,255,255,0.25); }
+  .chase-chef, .chase-dodo, .chase-burger{
+    position:absolute; bottom:10px; left:0;
+    width:42px; height:36px;
+    transform:translateX(var(--tx,0px));
+  }
+  .chase-chef{ color:var(--accent); width:32px; height:32px; }
+  .chase-dodo{ width:46px; height:32px; color:#f5f7fa; transition:opacity 0.25s ease, transform 0.25s ease; }
+  .chase-burger{ width:34px; height:34px; color:#f5f7fa; opacity:0; transform:translateX(var(--tx,0px)) scale(0.4) rotate(-25deg); transition:opacity 0.3s ease 0.12s, transform 0.3s ease 0.12s; }
+  .chase-chef svg, .chase-dodo svg, .chase-burger svg{ width:100%; height:100%; display:block; }
+  .chase-chef{ animation:runBobChef 0.46s ease-in-out infinite; }
+  .chase-dodo{ animation:runBobDodo 0.38s ease-in-out infinite; }
+  @keyframes runBobChef{ 0%,100%{ transform:translateX(var(--tx,0px)) translateY(0); } 50%{ transform:translateX(var(--tx,0px)) translateY(-3px); } }
+  @keyframes runBobDodo{ 0%,100%{ transform:translateX(var(--tx,0px)) translateY(0); } 50%{ transform:translateX(var(--tx,0px)) translateY(-4px); } }
+  .chase-dodo.caught{ opacity:0; transform:translateX(var(--tx,0px)) scale(0.4) rotate(20deg); animation:none; }
+  .chase-burger.caught{ opacity:1; transform:translateX(var(--tx,0px)) scale(1) rotate(0deg); }
+  @media (prefers-reduced-motion:reduce){ .chase-chef, .chase-dodo{ animation:none; } }
+
+  /* ---------- hero ---------- */
+  .hero{
+    padding:0;
+    background:var(--navy-950);
+  }
+  .hero-media{ position:absolute; inset:0; z-index:0; }
+  .hero-media img{
+    width:100%; height:100%; object-fit:cover; object-position:66% 55%; display:block;
+    animation:heroZoom 2.2s cubic-bezier(.2,.7,.3,1) both;
+    transform-origin:66% 55%;
+  }
+  @keyframes heroZoom{ from{ transform:scale(1.08); } to{ transform:scale(1); } }
+  .hero-scrim{
+    position:absolute; inset:0; z-index:1;
+    background:
+      linear-gradient(100deg, rgba(2,11,20,0.88) 0%, rgba(2,11,20,0.58) 40%, rgba(2,11,20,0.18) 66%, rgba(2,11,20,0.4) 100%),
+      linear-gradient(to top, rgba(2,11,20,0.55), transparent 42%);
+  }
+
+  /* ---------- reusable full-bleed panel photo + scrim (dark panels) ---------- */
+  .panel-media{ position:absolute; inset:0; z-index:0; }
+  .panel-media img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .panel-scrim{
+    position:absolute; inset:0; z-index:1;
+    background:
+      linear-gradient(100deg, rgba(2,11,20,0.92) 0%, rgba(2,11,20,0.72) 46%, rgba(2,11,20,0.4) 100%),
+      linear-gradient(to top, rgba(2,11,20,0.5), transparent 38%);
+  }
+  .panel > .panel-inner{ position:relative; z-index:2; }
+
+  /* ---------- reusable text+photo split (light panels) ---------- */
+  .split-grid{ display:grid; grid-template-columns:1.1fr 0.9fr; gap:32px; align-items:center; margin-top:22px; }
+  @media (max-width:860px){ .split-grid{ grid-template-columns:1fr; } }
+  .split-photo{ border-radius:16px; overflow:hidden; border:1px solid var(--line); aspect-ratio:4/5; }
+  .split-photo img{ width:100%; height:100%; object-fit:cover; display:block; }
+  @media (max-width:860px){ .split-photo{ aspect-ratio:16/9; } }
+  .hero-content{
+    position:relative; z-index:2; width:100%; height:100%;
+    display:flex; flex-direction:column; justify-content:center;
+    padding:calc(var(--header-h) + env(safe-area-inset-top,0px) + 20px) 20px 60px;
+  }
+
+  .hero h1{
+    font-size:clamp(2rem, 5.2vw, 3.6rem);
+    line-height:1.05;
+    color:var(--ink-900);
+    max-width:16ch;
+    opacity:0; animation:heroRise 0.8s 0.35s cubic-bezier(.16,.9,.3,1) both;
+  }
+  .hero h1 em{ font-style:normal; color:var(--accent); }
+  .hero p.lede{
+    margin-top:18px; max-width:50ch; color:var(--ink-600); font-size:1rem;
+    opacity:0; animation:heroRise 0.8s 0.5s cubic-bezier(.16,.9,.3,1) both;
+  }
+  .hero .ctas{
+    display:flex; gap:14px; margin-top:26px; flex-wrap:wrap; align-items:center;
+    opacity:0; animation:heroRise 0.8s 0.65s cubic-bezier(.16,.9,.3,1) both;
+  }
+  @keyframes heroRise{ from{ opacity:0; transform:translateY(16px); } to{ opacity:1; transform:translateY(0); } }
+
+  .btn{
+    border:none; border-radius:999px; padding:14px 26px; font-weight:700; font-size:0.95rem;
+    cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:8px;
+    transition:transform 0.15s, box-shadow 0.15s, background 0.15s;
+  }
+  .btn-primary{ background:var(--accent-strong); color:#fff; box-shadow:0 14px 28px -14px rgba(2,11,20,0.45); }
+  .btn-primary:hover{ background:var(--accent-strong-hover); transform:translateY(-2px); }
+  .btn-ghost{ background:none; border:none; padding:14px 2px; color:var(--ink-900); font-weight:600; }
+  .btn-ghost::after{ content:"→"; display:inline-block; margin-left:2px; transition:transform 0.15s; }
+  .btn-ghost:hover::after{ transform:translateX(4px); }
+  .btn:active{ transform:scale(0.97); }
+
+  .hero-stats{
+    display:flex; gap:24px; margin-top:32px; flex-wrap:wrap;
+    opacity:0; animation:heroRise 0.8s 0.8s cubic-bezier(.16,.9,.3,1) both;
+  }
+  .stat{ font-family:'Space Mono',monospace; }
+  .stat .n{ font-size:1.2rem; color:var(--accent-text); font-weight:700; }
+  .stat .l{ font-size:0.7rem; color:var(--ink-600); text-transform:uppercase; letter-spacing:0.1em; }
+
+  .scroll-hint{
+    position:absolute; right:24px; bottom:20px; z-index:2;
+    display:flex; align-items:center; gap:8px;
+    font-family:'Space Mono',monospace; font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--on-dark-muted, var(--ink-600));
+    opacity:0; animation:heroRise 0.8s 1s cubic-bezier(.16,.9,.3,1) both;
+  }
+  .scroll-hint .arrow{ display:inline-block; animation:nudge 1.6s ease-in-out infinite; }
+  @keyframes nudge{ 0%,100%{ transform:translateX(0); } 50%{ transform:translateX(6px); } }
+
+  @media (prefers-reduced-motion:reduce){
+    .hero-media img{ animation:none; }
+    .hero h1, .hero p.lede, .hero .ctas, .hero-stats, .scroll-hint{ animation:none; opacity:1; }
+    .scroll-hint .arrow{ animation:none; }
+  }
+  @media (max-width:720px){
+    .hero-content{ padding-bottom:40px; }
+    .hero h1{ font-size:clamp(1.8rem, 7vw, 2.6rem); }
+  }
+
+  /* ---------- why us ---------- */
+  .usp-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:28px; margin-top:8px; }
+  @media (max-width:780px){ .usp-grid{ grid-template-columns:1fr; gap:20px; } }
+  .usp-card{ padding:22px 2px 4px; border-top:2px solid var(--accent-strong); }
+  .usp-card h3{ font-size:1.02rem; color:var(--ink-900); margin-bottom:8px; }
+  .usp-card p{ color:var(--ink-600); font-size:0.88rem; margin:0; }
+
+  .section-head{ max-width:62ch; }
+  .section-head h2{ font-size:clamp(1.6rem,3.2vw,2.2rem); color:var(--ink-900); }
+  .section-head p{ color:var(--ink-600); margin-top:10px; }
+
+  /* ---------- field log ---------- */
+  #story{ background:linear-gradient(180deg, var(--navy-950), #050f18); }
+  .dossier{
+    background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:28px; display:grid; grid-template-columns:1fr 1fr; gap:28px; position:relative; overflow:hidden;
+    margin-top:22px;
+  }
+  @media (max-width:780px){ .dossier{ grid-template-columns:1fr; } }
+  .stamp{
+    position:absolute; top:20px; right:24px; transform:rotate(8deg);
+    border:2px solid var(--accent-text); color:var(--accent-text);
+    font-family:'Space Mono',monospace; font-weight:700; font-size:0.7rem; letter-spacing:0.14em;
+    padding:5px 10px; border-radius:6px; opacity:0.9;
+  }
+  .dossier h3{ font-size:1.2rem; margin-bottom:12px; color:var(--ink-900); }
+  .dossier p{ color:var(--ink-600); margin:0 0 10px; font-size:0.94rem; }
+  .dossier .field{ font-family:'Space Mono',monospace; font-size:0.76rem; color:var(--accent-text); margin-bottom:6px; }
+  .field b{ color:var(--ink-900); font-weight:700; }
+  .readout-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; align-content:start; }
+  .readout{ background:var(--card-alt); border:1px solid var(--line); border-radius:12px; padding:12px; }
+  .readout .n{ font-family:'Space Mono',monospace; font-size:1.15rem; color:var(--accent-text); font-weight:700; }
+  .readout .l{ font-size:0.7rem; color:var(--ink-600); text-transform:uppercase; letter-spacing:0.08em; margin-top:2px; }
+
+  /* ---------- visit us ---------- */
+  #visit{ background:linear-gradient(180deg, var(--navy-950), #050f18); }
+  .visit-grid{ display:grid; grid-template-columns:1.1fr 1fr; gap:28px; margin-top:16px; align-items:start; }
+  @media (max-width:780px){ .visit-grid{ grid-template-columns:1fr; } }
+  .visit-info .field{ font-family:'Space Mono',monospace; font-size:0.85rem; color:var(--accent-text); margin-bottom:10px; line-height:1.5; }
+  .visit-info .field b{ color:var(--ink-900); }
+  .hours-card{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 16px; margin:12px 0; }
+  .hours-row{ display:flex; justify-content:space-between; gap:12px; font-family:'Space Mono',monospace; font-size:0.85rem; color:var(--ink-900); }
+  .visit-info p{ color:var(--ink-600); font-size:0.85rem; margin-top:16px; }
+  .visit-map{ border:1px solid var(--line); border-radius:14px; overflow:hidden; aspect-ratio:16/11; background:var(--card); }
+  .visit-map iframe{ width:100%; height:100%; border:0; display:block; }
+  .visit-map-link{ display:inline-block; margin-top:10px; font-family:'Space Mono',monospace; font-size:0.72rem; color:var(--accent-text); text-decoration:underline; text-underline-offset:2px; }
+
+  /* ---------- menu ---------- */
+  #menu{ background:var(--card-alt); }
+  .menu-banner{ border-radius:14px; overflow:hidden; aspect-ratio:21/5; margin-top:16px; border:1px solid var(--line); }
+  .menu-banner img{ width:100%; height:100%; object-fit:cover; object-position:50% 35%; display:block; }
+  @media (max-width:720px){ .menu-banner{ aspect-ratio:16/9; } }
+  .menu-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:16px; }
+  @media (max-width:860px){ .menu-grid{ grid-template-columns:repeat(2,1fr); } }
+  .item-card{
+    background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden;
+    display:flex; flex-direction:column; transition:border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+  }
+  .item-card:hover{ border-color:rgba(63,111,156,0.4); transform:translateY(-3px); box-shadow:var(--shadow); }
+  .burger-plate{
+    aspect-ratio:4/3; overflow:hidden; background:var(--card-alt);
+  }
+  .burger-plate img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .item-card-body{ padding:16px; display:flex; flex-direction:column; gap:8px; flex:1; }
+  .item-card .tag{
+    align-self:flex-start; font-family:'Space Mono',monospace; font-size:0.62rem; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--accent-strong); background:var(--accent-tint); padding:3px 9px; border-radius:999px; font-weight:700;
+  }
+  .item-card .tag.veg{ background:var(--card-alt); color:var(--ink-600); border:1px solid var(--line); }
+  .item-card h3{ font-size:1rem; margin-top:2px; color:var(--ink-900); }
+  .item-card p{ color:var(--ink-600); font-size:0.8rem; margin:0; flex:1; }
+  .item-foot{ display:flex; align-items:center; justify-content:space-between; margin-top:4px; }
+  .price{ font-family:'Space Mono',monospace; font-weight:700; color:var(--ink-900); }
+  .add-btn{
+    background:var(--navy-950); color:#fff; border:1px solid var(--navy-950); border-radius:999px;
+    padding:7px 12px; font-size:0.76rem; font-weight:700; cursor:pointer; transition:background 0.15s;
+  }
+  .add-btn:hover{ background:var(--accent-strong); border-color:var(--accent-strong); }
+
+  /* ---------- builder: picks + live summary, one panel ---------- */
+  #builder{ background:var(--paper); }
+  .builder-combined{ display:grid; grid-template-columns:1.5fr 1fr; gap:28px; margin-top:18px; align-items:start; }
+  @media (max-width:900px){ .builder-combined{ grid-template-columns:1fr; } }
+  .builder-picks{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px 20px; }
+  @media (max-width:520px){ .builder-picks{ grid-template-columns:1fr; } }
+  .choice-group > label.gl{ display:block; font-family:'Space Mono',monospace; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent-text); margin-bottom:10px; }
+  .swatch-row{ display:flex; flex-direction:column; gap:10px; }
+  .swatch{
+    border:2px solid var(--line); background:var(--card-alt); border-radius:12px; overflow:hidden;
+    cursor:pointer; padding:0; text-align:left; position:relative;
+    display:flex; align-items:center; gap:10px;
+    transition:border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+  }
+  .swatch:hover{ border-color:rgba(63,111,156,0.4); }
+  .swatch .swatch-img{ width:52px; height:52px; object-fit:cover; display:block; flex:none; }
+  .swatch .swatch-label{ padding:6px 10px 6px 0; font-size:0.76rem; line-height:1.25; color:var(--ink-900); font-weight:600; }
+  .swatch .swatch-delta{ display:block; font-family:'Space Mono',monospace; font-size:0.66rem; color:var(--ink-600); font-weight:400; margin-top:1px; }
+  .swatch.selected{ border-color:var(--accent-strong); box-shadow:0 0 0 3px var(--accent-tint); }
+  .swatch.selected .swatch-check{
+    position:absolute; top:5px; right:5px; width:18px; height:18px; border-radius:50%;
+    background:var(--accent-strong); color:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:0.62rem; font-weight:700; box-shadow:0 2px 6px rgba(2,11,20,0.25);
+  }
+
+  /* ---------- builder: live summary sidebar ---------- */
+  .builder-summary{
+    background:var(--card-alt); border:1px solid var(--line); border-radius:14px; padding:20px;
+    display:flex; flex-direction:column;
+  }
+  .builder-summary h3{ font-size:1rem; margin-bottom:12px; color:var(--ink-900); }
+  .builder-preview{
+    margin-bottom:12px; border-radius:10px; overflow:hidden; aspect-ratio:16/11;
+    background:radial-gradient(ellipse at 50% 70%, rgba(102,153,204,0.12), transparent 70%), var(--card);
+    border:1px solid var(--line);
+  }
+  .builder-preview svg{ width:100%; height:100%; display:block; animation:previewFloat 3.4s ease-in-out infinite; }
+  @keyframes previewFloat{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-3px); } }
+  .build-layer{ transform-origin:100px 90px; }
+  .build-layer.is-new{ animation:layerPop 0.55s cubic-bezier(.22,.85,.3,1.3) both; }
+  .build-layer.is-new .glow-shape{ animation:glowPulse 0.55s ease-out both; }
+  @keyframes layerPop{
+    0%{ opacity:0; transform:scale(0.8); }
+    55%{ opacity:1; transform:scale(1.08); }
+    100%{ opacity:1; transform:scale(1); }
+  }
+  @keyframes glowPulse{
+    0%{ opacity:0.85; }
+    100%{ opacity:0; }
+  }
+  @media (prefers-reduced-motion:reduce){
+    .builder-preview svg{ animation:none; }
+    .build-layer.is-new, .build-layer.is-new .glow-shape{ animation:none; }
+  }
+  #buildLines{ list-style:none; margin:0 0 14px; padding:0; font-size:0.88rem; color:var(--ink-600); display:flex; flex-direction:column; gap:6px; min-height:24px; }
+  .build-total{ display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--line); padding-top:14px; margin-top:auto; font-weight:700; color:var(--ink-900); }
+  .build-total .n{ font-family:'Space Mono',monospace; color:var(--accent-text); font-size:1.2rem; }
+
+  /* ---------- faq ---------- */
+  #faq{ background:var(--card-alt); }
+  .faq-list{ margin-top:16px; }
+  .faq-item{ border-bottom:1px solid var(--line); }
+  .faq-q{
+    width:100%; text-align:left; background:none; border:none; color:var(--ink-900);
+    padding:14px 0; font-size:0.95rem; font-weight:700; cursor:pointer;
+    display:flex; justify-content:space-between; align-items:center; gap:16px;
+  }
+  .faq-q .plus{ font-family:'Space Mono',monospace; color:var(--accent-text); transition:transform 0.2s; flex:none; }
+  .faq-item[open] .plus{ transform:rotate(45deg); }
+  .faq-a{ color:var(--ink-600); padding-bottom:14px; margin:0; max-width:65ch; font-size:0.88rem; }
+  details.faq-item > summary{ list-style:none; }
+  details.faq-item > summary::-webkit-details-marker{ display:none; }
+
+
+  /* ---------- cart drawer ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(2,11,20,0.45); backdrop-filter:blur(2px);
+    opacity:0; pointer-events:none; transition:opacity 0.2s; z-index:60;
+  }
+  .overlay.open{ opacity:1; pointer-events:auto; }
+  .drawer{
+    position:fixed; top:0; right:0; height:100%; width:min(380px,92vw);
+    background:#ffffff; border-left:1px solid #e2e8f0; color:#0a1420;
+    box-shadow:var(--shadow);
+    transform:translateX(100%); transition:transform 0.25s ease; z-index:61;
+    display:flex; flex-direction:column;
+    padding-top:calc(20px + env(safe-area-inset-top,0px));
+    padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));
+  }
+  .drawer.open{ transform:translateX(0); }
+  .drawer-head{ display:flex; justify-content:space-between; align-items:center; padding:0 22px 16px; border-bottom:1px solid #e2e8f0; }
+  .drawer-head h3{ font-size:1.1rem; color:#0a1420; }
+  .close-x{ background:none; border:none; color:#4d5f70; font-size:1.3rem; cursor:pointer; line-height:1; }
+  #cartItems{ list-style:none; margin:0; padding:16px 22px; display:flex; flex-direction:column; gap:14px; overflow-y:auto; flex:1; }
+  #cartItems::-webkit-scrollbar{ width:8px; }
+  #cartItems::-webkit-scrollbar-thumb{ background:#cbd5e1; border-radius:999px; }
+  .cart-line{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+  .cart-line .name{ font-weight:700; font-size:0.92rem; color:#0a1420; }
+  .cart-line .meta{ font-size:0.78rem; color:#4d5f70; }
+  .cart-line .rm{ background:none; border:none; color:#4d5f70; font-size:0.78rem; cursor:pointer; padding:0; margin-top:4px; text-decoration:underline; text-underline-offset:2px; }
+  .cart-empty{ color:#4d5f70; font-size:0.9rem; text-align:center; padding-top:40px; }
+  .drawer-foot{ padding:18px 22px 0; border-top:1px solid #e2e8f0; }
+  .drawer-total{ display:flex; justify-content:space-between; font-weight:700; margin-bottom:14px; color:#0a1420; }
+  .drawer-total .n{ font-family:'Space Mono',monospace; color:var(--accent-strong); }
+  .submit-btn{ width:100%; }
+  .drawer .price{ color:#0a1420; }
+
+  .toast{
+    position:fixed; left:50%; bottom:24px; transform:translate(-50%, calc(100% + 24px));
+    background:var(--navy-950); color:#fff; font-weight:700; font-size:0.9rem;
+    padding:12px 22px; border-radius:999px; box-shadow:var(--shadow);
+    transition:transform 0.3s ease; z-index:80; white-space:nowrap;
+  }
+  .toast.show{ transform:translate(-50%,0); }
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<header>
+  <div class="wrap nav">
+    <a href="#top" class="logo">
+      <img class="logo-mark" src="images/logo.jpg" alt="">
+      <span class="logo-text">Dodo Burgers<small>Tuas Reclaimed Waterfront</small></span>
+    </a>
+    <nav class="links">
+      <a href="#visit">Visit</a>
+      <a href="#story">The Discovery</a>
+      <a href="#menu">Menu</a>
+      <a href="#faq">FAQ</a>
+      <a href="#builder">Build Your Own</a>
+    </nav>
+    <details class="credits">
+      <summary>Credits</summary>
+      <div class="credits-panel">
+        Burger and ingredient photography via Pexels (Pexels License, free for commercial use), including feature photography added 2026-09-24 for the Visit, Why-us, Field-log, Menu, and FAQ panels. Waterfront and mangrove photos via Pexels. Dodo specimen photo (plaster and wax model, Muséum national d'Histoire naturelle, Paris) by Jebulon via Wikimedia Commons, CC0. All photos edited and composited for this site; the hero waterfront photo is a re-graded, tighter crop of the original composite. The chef-chasing-a-dodo icon pair that runs along the bottom of the screen is illustration, not photography — a named, approved exception to this site's real-photo policy (see PRODUCT.md). The chef and burger icons are the "Cook" and "Hamburger" icons by Delapouite, via game-icons.net (CC BY 3.0); the dodo icon is original to this site. The map on the Visit panel is an OpenStreetMap embed, © OpenStreetMap contributors.
+      </div>
+    </details>
+    <details class="credits" id="authBox">
+      <summary id="authLabel">Log in</summary>
+      <div class="credits-panel">
+        <form id="authForm">
+          <input type="email" id="authEmail" placeholder="Email" required style="width:100%;margin-bottom:8px;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--card-alt);color:var(--ink-900);">
+          <input type="password" id="authPassword" placeholder="Password (6+ chars)" required minlength="6" style="width:100%;margin-bottom:8px;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--card-alt);color:var(--ink-900);">
+          <div style="display:flex;gap:8px;">
+            <button type="submit" data-mode="login" class="btn btn-primary" style="flex:1;padding:8px;font-size:0.78rem;">Log in</button>
+            <button type="submit" data-mode="signup" class="btn btn-ghost" style="flex:1;padding:8px;font-size:0.78rem;">Sign up</button>
+          </div>
+          <p id="authMsg" style="margin-top:8px;"></p>
+        </form>
+        <button type="button" id="logoutBtn" class="btn btn-ghost" style="display:none;width:100%;padding:8px;font-size:0.78rem;">Log out</button>
+      </div>
+    </details>
+    <button class="cart-btn" id="openCart" aria-haspopup="true" aria-controls="cartDrawer">
+      Order <span class="cart-count" id="cartCount">0</span>
+    </button>
+  </div>
+</header>
+
+<main class="track" id="track">
+
+  <section class="panel hero" id="top">
+    <div class="hero-media" aria-hidden="true">
+      <img src="images/hero-wide.jpg" alt="A dodo swimming at dusk off the Tuas port waterfront, cranes and a burning sunset behind it" loading="eager">
+    </div>
+    <div class="hero-scrim" aria-hidden="true"></div>
+    <div class="hero-content">
+      <div class="wrap">
+        <h1>Extinct in 1681.<br>Back on the menu <em>now</em>.</h1>
+        <p class="lede">In 2019, marine biologists surveying Singapore's newest reclaimed land found something nobody expected: a thriving, fully aquatic population of dodos, quietly evolved in the Tuas shallows for three centuries. NParks confirmed it. We turned it into burgers.</p>
+        <div class="ctas">
+          <a href="#menu" class="btn btn-primary">See the menu</a>
+          <a href="#story" class="btn btn-ghost">Read the field log</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat"><div class="n">40,000+</div><div class="l">Confirmed population</div></div>
+          <div class="stat"><div class="n">‑6.2 m</div><div class="l">Average dive depth</div></div>
+          <div class="stat"><div class="n">2019</div><div class="l">Year of rediscovery</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-hint"><span>Scroll sideways</span><span class="arrow">→</span></div>
+  </section>
+
+  <section class="panel" id="visit">
+    <div class="panel-media" aria-hidden="true"><img src="images/feature-dark.jpg" alt="" loading="lazy"></div>
+    <div class="panel-scrim" aria-hidden="true"></div>
+    <div class="panel-inner">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Find the shop</h2>
+          <p>Tuas South Reclaimed Waterfront — further out than it sounds, worth the walk from the last stop.</p>
+        </div>
+        <div class="visit-grid">
+          <div class="visit-info">
+            <div class="field"><b>Address:</b> Tuas South Reclaimed Waterfront, Singapore</div>
+            <div class="field"><b>Nearest MRT:</b> Tuas Link (East-West Line terminus), then a waterfront walk</div>
+            <div class="hours-card">
+              <div class="hours-row"><span>Kitchen</span><span>Daily, 11:00–22:00</span></div>
+            </div>
+            <p>Sourced from licensed pens, not the wild population. EST. 2019 (the bird's, not the shop's).</p>
+          </div>
+          <div>
+            <div class="visit-map">
+              <iframe title="Map to Dodo Burgers, near Tuas Link MRT" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.openstreetmap.org/export/embed.html?bbox=103.6305%2C1.3360%2C103.6425%2C1.3440&amp;marker=1.3400%2C103.6365&amp;layer=mapnik"></iframe>
+            </div>
+            <a class="visit-map-link" href="https://www.openstreetmap.org/?mlat=1.3400&amp;mlon=103.6365#map=15/1.3400/103.6365" target="_blank" rel="noopener">Open in OpenStreetMap →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="why">
+    <div class="panel-inner">
+      <div class="wrap">
+        <div class="section-head"><h2>Why us, specifically</h2></div>
+        <div class="split-grid">
+          <div class="usp-grid">
+            <div class="usp-card">
+              <h3>One bird. One chain.</h3>
+              <p>Dodo meat exists in exactly one place on Earth right now. It's on this menu, not anyone else's.</p>
+            </div>
+            <div class="usp-card">
+              <h3>A comeback, not a commodity</h3>
+              <p>Every other patty on every other menu is beef, chicken, or plant protein. Ours went extinct once and came back anyway.</p>
+            </div>
+            <div class="usp-card">
+              <h3>Reclaimed, like everything else here</h3>
+              <p>Singapore's been reclaiming land from the sea for fifty years. Turns out we reclaimed a bird too — raised in the same shallows, never shipped in.</p>
+            </div>
+          </div>
+          <div class="split-photo"><img src="images/feature-board.jpg" alt="Several gourmet burgers with cheese, bacon, and fresh toppings on wooden boards" loading="lazy"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="story">
+    <div class="panel-media" aria-hidden="true"><img src="images/feature-sliced.jpg" alt="" loading="lazy"></div>
+    <div class="panel-scrim" aria-hidden="true"></div>
+    <div class="panel-inner">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>How a flightless bird learned to swim</h2>
+          <p>The short version, for people who'd rather order a burger than read a survey report.</p>
+        </div>
+        <div class="dossier">
+          <div class="stamp">DECLASSIFIED</div>
+          <div>
+            <h3>What actually happened</h3>
+            <p>When land reclamation reached the old Tuas mudflats, sonar crews picked up movement nobody could place. Descendants of <em>Raphus cucullatus</em> — the dodo of Mauritius — had survived by going somewhere nobody thought to check: underwater.</p>
+            <div class="field"><b>Species:</b> Raphus cucullatus var. natans</div>
+            <div class="field"><b>Status:</b> Thriving, licensed aquaculture population</div>
+          </div>
+          <div class="readout-grid" style="grid-template-columns:repeat(3,1fr);">
+            <div class="readout"><div class="n">3.4 kg</div><div class="l">Avg. weight</div></div>
+            <div class="readout"><div class="n">11 min</div><div class="l">Breath-hold</div></div>
+            <div class="readout"><div class="n">2019</div><div class="l">Rediscovered</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="menu">
+    <div class="panel-inner">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Four ways to eat a comeback story</h2>
+          <p>Every patty comes from our licensed pens on the Tuas shelf — never wild stock.</p>
+        </div>
+        <div class="menu-banner"><img src="images/feature-stacked.jpg" alt="Stacked cheeseburgers with melted cheddar and barbecue sauce" loading="lazy"></div>
+        <div class="menu-grid" id="menuGrid"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="faq">
+    <div class="panel-inner">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Before you order</h2>
+        </div>
+        <div class="split-grid">
+          <div class="faq-list" id="faqList"></div>
+          <div class="split-photo"><img src="images/feature-handheld.jpg" alt="A hand picking up a stacked burger" loading="lazy"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="builder">
+    <div class="panel-inner">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Assemble your own Dodo</h2>
+          <p>Click a photo to pick your patty, bun, sauce, and however many toppings your conscience allows — watch it build live.</p>
+        </div>
+        <div class="builder-combined">
+          <div class="builder-picks">
+            <div class="choice-group">
+              <label class="gl">Patty</label>
+              <div class="swatch-row" id="pattyRow"></div>
+            </div>
+            <div class="choice-group">
+              <label class="gl">Bun</label>
+              <div class="swatch-row" id="bunRow"></div>
+            </div>
+            <div class="choice-group">
+              <label class="gl">Sauce</label>
+              <div class="swatch-row" id="sauceRow"></div>
+            </div>
+            <div class="choice-group">
+              <label class="gl">Toppings</label>
+              <div class="swatch-row" id="toppingRow"></div>
+            </div>
+          </div>
+          <div class="builder-summary">
+            <div class="builder-preview" id="builderPreview" aria-hidden="true"></div>
+            <h3>Your build</h3>
+            <ul id="buildLines"></ul>
+            <div class="build-total">
+              <span>Total</span>
+              <span class="n" id="buildTotal">$0.00</span>
+            </div>
+            <button class="btn btn-primary" style="margin-top:16px;width:100%;" id="addBuild">Add to order</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="chase-bar" aria-hidden="true">
+  <div class="chase-ground"></div>
+  <div class="chase-chef" id="chaseChef">
+    <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+      <path fill="currentColor" d="M255 22.31c-21.2 0-40.5 10.78-50.5 27.63l-4.4 7.42-7.6-4.08c-7.1-3.85-15.2-5.89-23.3-5.89-28.3 0-51.3 23.57-51.3 53.21 0 26.5 18.6 48.6 43.5 52.6l7.6 1.2v53.4c57.9-11.1 116-11.6 174 0v-69.7l4.8-2.6c15.7-8.3 26.1-26.1 26.1-46.15 0-28.8-20.7-51.12-45.4-51.12-6.5 0-13 1.61-18.9 4.72l-6.2 3.2-4.6-5.09C288 29.29 272 22.31 255 22.31zm1 194.79c-25.6 0-51.1 2.4-76.7 7-.9 6-1.3 12.2-1.3 18.6 0 29 9.2 55.2 23.6 73.7 14.4 18.5 33.5 29.3 54.4 29.3s40-10.8 54.4-29.3c14.4-18.5 23.6-44.7 23.6-73.7 0-6.4-.5-12.7-1.3-18.7-25.6-4.7-51.1-7-76.7-6.9zM208.7 348l-89.2 29.7-27.98 112H321.6L307.1 388l17.8-2.6 14.9 104.3h80.7l-28-112-89.2-29.7c-13.8 9.9-30 15.7-47.3 15.7-17.3 0-33.5-5.8-47.3-15.7zm69.3 52.7a9.999 9.999 0 0 1 10 10 9.999 9.999 0 0 1-10 10 9.999 9.999 0 0 1-10-10 9.999 9.999 0 0 1 10-10zm7 46a10 10 0 0 1 10 10 10 10 0 0 1-10 10 10 10 0 0 1-10-10 10 10 0 0 1 10-10z"/>
+    </svg>
+  </div>
+  <div class="chase-dodo" id="chaseDodo">
+    <svg viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="26" cy="22" rx="15" ry="10" fill="currentColor"/>
+      <circle cx="43" cy="14" r="7" fill="currentColor"/>
+      <path d="M49 12 L60 15 L49 18 Z" fill="currentColor"/>
+      <circle cx="45" cy="12" r="1.3" fill="#020b14"/>
+      <path d="M16 30 L10 38 L16 34 Z" fill="currentColor"/>
+      <path d="M28 30 L34 37 L26 35 Z" fill="currentColor"/>
+    </svg>
+  </div>
+  <div class="chase-burger" id="chaseBurger">
+    <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+      <path fill="currentColor" d="M250.97 29.357c-106.557-.21-211.806 52.74-203.48 164.053 138.91 11.4 276.71 8.893 414.174.662 10.58-107.69-100.753-164.498-210.693-164.715zm59.876 23.996c11.165 0 20.216 4.468 20.216 9.98 0 5.513-9.051 9.981-20.216 9.981-11.166 0-20.217-4.468-20.217-9.98 0-5.513 9.051-9.98 20.217-9.98zm-111.852 19.83c11.165 0 20.217 4.469 20.217 9.98 0 5.513-9.052 9.981-20.217 9.981s-20.216-4.468-20.217-9.98c0-5.512 9.052-9.98 20.217-9.98zm178.057 34.02c11.165 0 20.216 4.468 20.217 9.98 0 5.512-9.052 9.98-20.217 9.98s-20.217-4.468-20.217-9.98c0-5.512 9.052-9.98 20.217-9.98zm-273.59 21.535c11.165 0 20.216 4.468 20.217 9.98 0 5.513-9.052 9.98-20.217 9.98s-20.217-4.467-20.217-9.98c0-5.512 9.052-9.98 20.217-9.98zm313.77 30.043c11.165 0 20.216 4.468 20.216 9.98 0 5.512-9.051 9.98-20.217 9.98-11.165 0-20.216-4.468-20.216-9.98 0-5.512 9.051-9.98 20.216-9.98zm-137.91 8.045c11.166 0 20.218 4.47 20.216 9.982 0 5.512-9.051 9.98-20.217 9.98-11.165 0-20.216-4.468-20.216-9.98-.002-5.513 9.05-9.982 20.216-9.982zM57.618 212.339c-18.964.405-9.028 24.485 14.383 24.573 128.554 10.208 236.673 9.686 372.117-2.42 16.096-2.708 25.212-13.087 10.824-21.969-131.579 7.67-263.81 10.045-397.324-.184zm403.024 40.612c-131.224 13.6-277.594 10.525-390.065 1.904-46.983-6.226-47.875 46.785-17.014 52.309 146.18 14.663 271.826 10.735 415.137-.53 25.007-1.144 14.554-55.328-8.058-53.683zM20.986 366.679l15.332 9.434c6.342-8.416 17.876-32.05 33.319-32.192 19.122-.174 22.345 39.302 41.98 39.103 22.607-.228 37.828-31.548 52.447-30.882 22.09 1.008 26.333 35.9 43.557 35.928 24.089.04 31.439-36.39 46.805-35.334 21.458 1.475 33.246 28.274 50.879 29.178 19.004.974 30.654-33.027 43.265-32.748 16.61.366 28.31 32.46 54.24 33.193 15.345.434 29.694-37.411 37.005-36.815 14.417 1.174 26.549 20.548 36.085 34.835l15.114-9.776c-12.029-16.216-30.117-44.428-52.558-44.017-20.907.382-25.948 38.114-38.102 37.943-23.28-.328-33.756-32.164-52.598-33.346-19.356-1.214-30.475 33.636-43.353 32.768-18.954-1.277-27.303-29.16-49.475-29.917-19.62-.67-34.121 37.669-46.793 36.044-18.139-2.326-20.226-36.378-43.317-37.836-19.11-1.207-37.562 30.604-50.314 29.999-17.525-.833-25.243-40.224-45.41-39.986-21.826.258-39.145 30.34-48.108 44.424zm47.553 36.174c-8.342.686-18.198 4.251-21.85 12.424-2.452 6.662 19.173 8.558 21.114 8.695 128.615 8.104 254.354 8.26 389.8-1.345 9.225-.655 13.935-3.147 15.252-4.414 3.124-8.208-23.168-13.935-25.818-14.004-185.01-1.178-279.257 2.209-378.498-1.356zm395.555 37.192c-126.786 6.957-283.18 9.384-408.123.707l.521 38.67c135.917 4.617 275.647 3.99 406.658-.088z"/>
+    </svg>
+  </div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="cartDrawer" aria-label="Your order">
+  <div class="drawer-head">
+    <h3>Your order</h3>
+    <button class="close-x" id="closeCart" aria-label="Close cart">&times;</button>
+  </div>
+  <ul id="cartItems"></ul>
+  <div class="drawer-foot">
+    <div class="drawer-total"><span>Total</span><span class="n" id="cartTotal">$0.00</span></div>
+    <button class="btn btn-primary submit-btn" id="submitOrder">Send to kitchen</button>
+  </div>
+</aside>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var MENU = [
+    {id:"classic", name:"Original Dodo Classic", tag:"Signature", veg:false, price:9.90,
+      desc:"Pen-raised dodo patty, crisp lettuce, tomato, house lagoon sauce (mayo with a sambal kick), sesame bun.",
+      img:"images/classic.jpg"},
+    {id:"sunda", name:"Spicy Sunda Strait", tag:"Double", veg:false, price:11.50,
+      desc:"Double patty, chilli-crab-style sambal sauce, pickled mangrove slaw, charcoal bun.",
+      img:"images/sunda.jpg"},
+    {id:"deluxe", name:"Reclaimed Deluxe", tag:"Chef's pick", veg:false, price:13.90,
+      desc:"Smoked dodo, aged cheddar, crispy dodo-skin chips, salted egg yolk lagoon mayo.",
+      img:"images/deluxe.jpg"},
+    {id:"kelp", name:"Kelp & Crumb", tag:"Plant-based", veg:true, price:8.90,
+      desc:"100% plant patty, laksa-leaf pesto, for guests not yet ready to commit to cryptid cuisine.",
+      img:"images/kelp.jpg"}
+  ];
+
+  var BUILDER = {
+    patty: [
+      {id:"classic-p", label:"Classic Dodo", price:6.50, img:"images/patty-classic.jpg"},
+      {id:"double-p", label:"Double Dodo", price:10.00, img:"images/patty-double.jpg"},
+      {id:"kelp-p", label:"Kelp & Crumb (veg)", price:5.50, img:"images/patty-veg.jpg"}
+    ],
+    bun: [
+      {id:"sesame-b", label:"Sesame bun", price:0, img:"images/bun-sesame.jpg"},
+      {id:"charcoal-b", label:"Charcoal bun", price:0.80, img:"images/bun-charcoal.jpg"},
+      {id:"lettuce-b", label:"Lettuce wrap", price:0, img:"images/bun-lettuce.jpg"}
+    ],
+    sauce: [
+      {id:"lagoon-s", label:"Lagoon sauce (sambal mayo)", price:0, img:"images/sauce-lagoon.jpg"},
+      {id:"sambal-s", label:"Chilli crab sambal", price:0.50, img:"images/sauce-sambal.jpg"},
+      {id:"truffle-s", label:"Salted egg yolk mayo", price:1.20, img:"images/sauce-egg.jpg"}
+    ],
+    topping: [
+      {id:"cheddar-t", label:"Aged cheddar", price:1.00, img:"images/top-cheddar.jpg"},
+      {id:"slaw-t", label:"Pickled mangrove slaw", price:0.80, img:"images/top-slaw.jpg"},
+      {id:"chips-t", label:"Crispy dodo-skin chips", price:1.50, img:"images/top-chips.jpg"},
+      {id:"egg-t", label:"Fried egg", price:1.20, img:"images/top-egg.jpg"}
+    ]
+  };
+
+  var FAQ = [
+    {q:"Wait — didn't dodos go extinct in the 1600s?", a:"The flightless, land-dwelling kind did, around 1681 on Mauritius. What turned up off Singapore's Tuas reclaimed shelf in 2019 is a fully aquatic descendant population that had been evolving quietly in the shallows for roughly three centuries. Same lineage, very different commute."},
+    {q:"Is it actually legal and sustainable to serve?", a:"Yes. The wild population is thriving and protected — every patty on this menu comes from our licensed aquaculture pens, monitored under NParks and SFA guidelines, never from wild-caught stock."},
+    {q:"What does dodo taste like?", a:"Think fish maw meets char siew — rich, slightly gamey, with the brininess you get from otah. If you've had chilli crab, you already know the umami we're chasing. Texture-wise, somewhere between duck confit and a good bak kwa."},
+    {q:"I'm not ready to eat a cryptid. Got anything else?", a:"The Kelp & Crumb patty is 100% plant-based and built on the same bun and sauce lineup, no dodo required."},
+    {q:"Are you halal-certified?", a:"Not yet — we're a new kitchen and MUIS certification is on our roadmap. For now, please dine with that in mind."},
+    {q:"Where do I actually find the shop?", a:"Tuas South Reclaimed Waterfront. Nearest MRT is Tuas Link — last stop on the East-West Line — then a bit of a walk. Bring comfortable shoes; the reclaimed land doesn't believe in shade."}
+  ];
+
+  var cart = [];
+  var build = { patty: BUILDER.patty[0], bun: BUILDER.bun[0], sauce: BUILDER.sauce[0], toppings: [] };
+
+  function money(n){ return "$" + n.toFixed(2); }
+
+  /* ---- animated "your build" illustration, redrawn from current selections ---- */
+  var prevBuildKey = null;
+  // wraps a layer's SVG in a <g>; when `changed` is true it pops in with a
+  // matching-colored glow flash instead of just silently appearing
+  function buildLayer(svgPart, changed, glowColor, glowRect){
+    if(!changed){
+      return '<g class="build-layer">' + svgPart + '</g>';
+    }
+    var glow = "";
+    if(glowColor){
+      glow = '<ellipse class="glow-shape" cx="' + glowRect[0] + '" cy="' + glowRect[1] + '" rx="' + glowRect[2] + '" ry="' + glowRect[3] + '" fill="' + glowColor + '" filter="url(#buildGlowBlur)"/>';
+    }
+    return '<g class="build-layer is-new">' + glow + svgPart + '</g>';
+  }
+  function wavyStrip(x0, x1, y, amp, fill, h){
+    var segs = 6, w = (x1 - x0) / segs, d = "M" + x0 + " " + y;
+    for(var i = 0; i < segs; i++){
+      var cx = x0 + w * i + w / 2, cy = y + (i % 2 === 0 ? -amp : amp), ex = x0 + w * (i + 1);
+      d += " Q" + cx + " " + cy + " " + ex + " " + y;
+    }
+    d += " L" + x1 + " " + (y + h) + " Q" + ((x0 + x1) / 2) + " " + (y + h + amp) + " " + x0 + " " + (y + h) + " Z";
+    return '<path d="' + d + '" fill="' + fill + '"/>';
+  }
+  function drizzle(x0, x1, y, amp, color){
+    var segs = 8, w = (x1 - x0) / segs, d = "M" + x0 + " " + y;
+    for(var i = 0; i < segs; i++){
+      var cx = x0 + w * i + w / 2, cy = y + (i % 2 === 0 ? -amp : amp), ex = x0 + w * (i + 1);
+      d += " Q" + cx + " " + cy + " " + ex + " " + y;
+    }
+    return '<path d="' + d + '" fill="none" stroke="' + color + '" stroke-width="4" stroke-linecap="round"/>';
+  }
+  function cheeseDrips(x0, x1, y, fill, count){
+    var w = (x1 - x0) / count;
+    var s = '<rect x="' + x0 + '" y="' + (y - 6) + '" width="' + (x1 - x0) + '" height="8" rx="2" fill="' + fill + '"/>';
+    for(var i = 0; i < count; i++){
+      var cx = x0 + w * i + w / 2, drip = (i % 2 === 0) ? 14 : 9;
+      s += '<path d="M' + (cx - w / 2 + 2) + " " + y + " L" + (cx + w / 2 - 2) + " " + y + " L" + cx + " " + (y + drip) + ' Z" fill="' + fill + '"/>';
+    }
+    return s;
+  }
+  function bunDome(fill, seedColor){
+    var s = '<path d="M30 92 Q30 40 100 34 Q170 40 170 92 Q100 78 30 92 Z" fill="' + fill + '"/>';
+    if(seedColor){
+      [[70,55],[92,48],[112,50],[130,58],[80,68],[118,70],[100,44]].forEach(function(p){
+        s += '<ellipse cx="' + p[0] + '" cy="' + p[1] + '" rx="2.6" ry="1.6" fill="' + seedColor + '" opacity="0.85" transform="rotate(-15 ' + p[0] + " " + p[1] + ')"/>';
+      });
+    }
+    return s;
+  }
+  function renderBuilderPreview(){
+    var bunId = build.bun.id, pattyId = build.patty.id, sauceId = build.sauce.id;
+    var bunTop = { "sesame-b": "#eeb85c", "charcoal-b": "#2c2621", "lettuce-b": "#8bc34a" }[bunId];
+    var bunBottom = { "sesame-b": "#d99a3d", "charcoal-b": "#17130f", "lettuce-b": "#6a9c34" }[bunId];
+    var pattyColor = pattyId === "kelp-p" ? "#7a9b3e" : "#5a3419";
+    var sauceColor = { "lagoon-s": "#3fbfa8", "sambal-s": "#e2483a", "truffle-s": "#e8b23f" }[sauceId];
+
+    // only the parts that actually changed since the last render should pop
+    // in with a glow -- on first render (prevBuildKey === null) nothing has
+    // "changed" yet, so the whole thing just appears, no flashing
+    var prev = prevBuildKey;
+    var bunChanged = !!prev && prev.bun !== bunId;
+    var pattyChanged = !!prev && prev.patty !== pattyId;
+    var sauceChanged = !!prev && prev.sauce !== sauceId;
+    function toppingJustAdded(tid){
+      return !!prev && prev.toppings.indexOf(tid) === -1 && build.toppings.indexOf(tid) !== -1;
+    }
+
+    var parts = [];
+    parts.push(buildLayer('<ellipse cx="100" cy="128" rx="66" ry="9" fill="rgba(21,33,29,0.15)"/>', false));
+
+    if(bunId === "lettuce-b"){
+      parts.push(buildLayer(wavyStrip(28, 172, 112, 6, bunTop, 14), bunChanged, bunTop, [100, 118, 76, 16]));
+    } else {
+      parts.push(buildLayer('<path d="M30 116 Q100 132 170 116 L168 104 Q100 116 32 104 Z" fill="' + bunBottom + '"/>', bunChanged, bunBottom, [100, 112, 76, 16]));
+    }
+
+    var topY;
+    if(pattyId === "double-p"){
+      // two visibly separate patties: a real gap plus a shadow seam between them,
+      // so this reads as "double" instead of blending into one thicker single patty
+      parts.push(buildLayer('<rect x="40" y="96" width="120" height="15" rx="7" fill="' + pattyColor + '"/>', pattyChanged, pattyColor, [100, 103, 68, 16]));
+      parts.push(buildLayer('<rect x="42" y="91" width="116" height="5" rx="2" fill="rgba(20,10,5,0.32)"/>', false));
+      parts.push(buildLayer('<rect x="44" y="76" width="112" height="15" rx="7" fill="' + pattyColor + '"/>', pattyChanged, pattyColor, [100, 83, 64, 16]));
+      topY = 76;
+    } else {
+      parts.push(buildLayer('<rect x="42" y="88" width="116" height="17" rx="8" fill="' + pattyColor + '"/>', pattyChanged, pattyColor, [100, 96, 66, 17]));
+      topY = 88;
+    }
+
+    if(build.toppings.indexOf("slaw-t") !== -1){
+      parts.push(buildLayer(wavyStrip(36, 164, topY - 2, 4, "#a8d16a", 10), toppingJustAdded("slaw-t"), "#a8d16a", [100, topY + 3, 70, 12]));
+    }
+    if(build.toppings.indexOf("cheddar-t") !== -1){
+      parts.push(buildLayer(cheeseDrips(38, 162, topY - 4, "#f5a623", 6), toppingJustAdded("cheddar-t"), "#f5a623", [100, topY - 4, 70, 14]));
+    }
+    if(build.toppings.indexOf("chips-t") !== -1){
+      var chipsSvg = "";
+      [[60, topY - 10], [100, topY - 14], [138, topY - 9]].forEach(function(p, i){
+        chipsSvg += '<ellipse cx="' + p[0] + '" cy="' + p[1] + '" rx="9" ry="5" fill="#f0a83c" opacity="0.9" transform="rotate(' + (i * 17 - 15) + " " + p[0] + " " + p[1] + ')"/>';
+      });
+      parts.push(buildLayer(chipsSvg, toppingJustAdded("chips-t"), "#f0a83c", [100, topY - 12, 70, 14]));
+    }
+    if(build.toppings.indexOf("egg-t") !== -1){
+      parts.push(buildLayer('<ellipse cx="100" cy="' + (topY - 8) + '" rx="16" ry="9" fill="#fff3d6"/><ellipse cx="100" cy="' + (topY - 8) + '" rx="6" ry="4" fill="#ffb648"/>', toppingJustAdded("egg-t"), "#ffb648", [100, topY - 8, 26, 14]));
+    }
+
+    parts.push(buildLayer(drizzle(46, 154, topY - 16, 5, sauceColor), sauceChanged, sauceColor, [100, topY - 16, 60, 14]));
+
+    if(bunId === "lettuce-b"){
+      parts.push(buildLayer(wavyStrip(30, 170, topY - 26, 7, bunTop, 16), bunChanged, bunTop, [100, topY - 18, 76, 20]));
+    } else {
+      parts.push(buildLayer(bunDome(bunTop, bunId === "charcoal-b" ? null : "#fff3d6"), bunChanged, bunTop, [100, 60, 76, 36]));
+    }
+
+    prevBuildKey = { bun: bunId, patty: pattyId, sauce: sauceId, toppings: build.toppings.slice() };
+
+    var defs = '<defs><filter id="buildGlowBlur" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="5"/></filter></defs>';
+    document.getElementById("builderPreview").innerHTML =
+      '<svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg">' + defs + parts.join("") + '</svg>';
+  }
+
+  function renderMenu(){
+    var grid = document.getElementById("menuGrid");
+    grid.innerHTML = MENU.map(function(item){
+      return '<div class="item-card">' +
+        '<div class="burger-plate"><img src="' + item.img + '" alt="' + item.name + '" loading="lazy"></div>' +
+        '<div class="item-card-body">' +
+        '<span class="tag' + (item.veg ? ' veg' : '') + '">' + item.tag + '</span>' +
+        '<h3>' + item.name + '</h3>' +
+        '<p>' + item.desc + '</p>' +
+        '<div class="item-foot"><span class="price mono">' + money(item.price) + '</span>' +
+        '<button class="add-btn" data-id="' + item.id + '">Add to order</button></div>' +
+        '</div></div>';
+    }).join("");
+    grid.querySelectorAll(".add-btn").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var item = MENU.filter(function(m){ return m.id === btn.getAttribute("data-id"); })[0];
+        addToCart({ name: item.name, price: item.price, meta: "" });
+        toast(item.name + " added to order");
+      });
+    });
+  }
+
+  function renderPillRow(rowId, options, groupKey, multi){
+    var row = document.getElementById(rowId);
+    row.innerHTML = options.map(function(opt){
+      var checked = multi
+        ? build.toppings.indexOf(opt.id) !== -1
+        : build[groupKey].id === opt.id;
+      return '<button type="button" class="swatch' + (checked ? ' selected' : '') + '" data-group="' + groupKey + '" data-id="' + opt.id + '" aria-pressed="' + checked + '">' +
+        '<img class="swatch-img" src="' + opt.img + '" alt="' + opt.label + '" loading="lazy">' +
+        (checked ? '<span class="swatch-check">✓</span>' : '') +
+        '<span class="swatch-label">' + opt.label + (opt.price > 0 ? '<span class="swatch-delta">+' + money(opt.price) + '</span>' : '') + '</span>' +
+        '</button>';
+    }).join("");
+    row.querySelectorAll(".swatch").forEach(function(swatch){
+      swatch.addEventListener("click", function(){
+        var id = swatch.getAttribute("data-id");
+        var opt = BUILDER[groupKey].filter(function(o){ return o.id === id; })[0];
+        if(multi){
+          var idx = build.toppings.indexOf(id);
+          if(idx === -1) build.toppings.push(id); else build.toppings.splice(idx,1);
+        } else {
+          build[groupKey] = opt;
+        }
+        renderBuilder();
+      });
+    });
+  }
+
+  function renderBuilder(){
+    renderPillRow("pattyRow", BUILDER.patty, "patty", false);
+    renderPillRow("bunRow", BUILDER.bun, "bun", false);
+    renderPillRow("sauceRow", BUILDER.sauce, "sauce", false);
+    renderPillRow("toppingRow", BUILDER.topping, "topping", true);
+
+    var lines = [build.patty.label, build.bun.label, build.sauce.label];
+    var total = build.patty.price + build.bun.price + build.sauce.price;
+    build.toppings.forEach(function(tid){
+      var t = BUILDER.topping.filter(function(o){ return o.id === tid; })[0];
+      lines.push(t.label);
+      total += t.price;
+    });
+    document.getElementById("buildLines").innerHTML = lines.map(function(l){ return "<li>" + l + "</li>"; }).join("");
+    document.getElementById("buildTotal").textContent = money(total);
+    build.total = total;
+    renderBuilderPreview();
+  }
+
+  function renderFaq(){
+    var list = document.getElementById("faqList");
+    list.innerHTML = FAQ.map(function(f, i){
+      return '<details class="faq-item"' + (i===0 ? " open" : "") + '>' +
+        '<summary class="faq-q">' + f.q + '<span class="plus">+</span></summary>' +
+        '<p class="faq-a">' + f.a + '</p>' +
+        '</details>';
+    }).join("");
+  }
+
+  function addToCart(entry){
+    cart.push(entry);
+    renderCart();
+  }
+
+  function renderCart(){
+    var itemsEl = document.getElementById("cartItems");
+    var countEl = document.getElementById("cartCount");
+    var totalEls = [document.getElementById("cartTotal")];
+    countEl.textContent = cart.length;
+
+    if(cart.length === 0){
+      itemsEl.innerHTML = '<div class="cart-empty">Nothing in here yet.<br>The dodos are waiting.</div>';
+    } else {
+      itemsEl.innerHTML = cart.map(function(entry, i){
+        return '<li class="cart-line">' +
+          '<div><div class="name">' + entry.name + '</div>' + (entry.meta ? '<div class="meta">' + entry.meta + '</div>' : '') +
+          '<button class="rm" data-i="' + i + '">Remove</button></div>' +
+          '<span class="price mono">' + money(entry.price) + '</span>' +
+          '</li>';
+      }).join("");
+      itemsEl.querySelectorAll(".rm").forEach(function(btn){
+        btn.addEventListener("click", function(){
+          cart.splice(Number(btn.getAttribute("data-i")), 1);
+          renderCart();
+        });
+      });
+    }
+    var total = cart.reduce(function(sum, e){ return sum + e.price; }, 0);
+    totalEls.forEach(function(el){ el.textContent = money(total); });
+  }
+
+  var toastTimer;
+  function toast(msg){
+    var el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ el.classList.remove("show"); }, 2200);
+  }
+
+  function openDrawer(){
+    document.getElementById("cartDrawer").classList.add("open");
+    document.getElementById("overlay").classList.add("open");
+  }
+  function closeDrawer(){
+    document.getElementById("cartDrawer").classList.remove("open");
+    document.getElementById("overlay").classList.remove("open");
+  }
+
+  document.getElementById("openCart").addEventListener("click", openDrawer);
+  document.getElementById("closeCart").addEventListener("click", closeDrawer);
+  document.getElementById("overlay").addEventListener("click", closeDrawer);
+
+  document.getElementById("addBuild").addEventListener("click", function(){
+    var meta = [build.patty.label, build.bun.label, build.sauce.label].concat(
+      build.toppings.map(function(tid){ return BUILDER.topping.filter(function(o){ return o.id===tid; })[0].label; })
+    ).join(", ");
+    addToCart({ name: "Build-Your-Own Dodo", price: build.total, meta: meta });
+    toast("Your build was added to the order");
+    openDrawer();
+  });
+
+  document.getElementById("submitOrder").addEventListener("click", function(){
+    if(cart.length === 0){ toast("Add something first"); return; }
+    toast("Order sent to the kitchen — thank you!");
+    cart = [];
+    renderCart();
+    setTimeout(closeDrawer, 900);
+  });
+
+  renderMenu();
+  renderBuilder();
+  renderFaq();
+  renderCart();
+})();
+</script>
+
+<script>
+/* ---- horizontal-track navigation: wheel-to-sideways, keyboard, anchor links, progress ----
+   Purely additive: does not read or modify any commerce/builder state above. */
+(function(){
+  "use strict";
+  var track = document.getElementById("track");
+  var chaseChef = document.getElementById("chaseChef");
+  var chaseDodo = document.getElementById("chaseDodo");
+  var chaseBurger = document.getElementById("chaseBurger");
+  var CHASE_GAP_START = 80; // px head start the dodo has at scroll start
+  var CHASE_GAP_END = 40; // px gap left once caught -- enough for the two icons to sit side by side, not overlap
+  var CAUGHT_AT = 0.995; // scroll fraction at which the chef catches the dodo
+
+  function updateProgress(){
+    var max = track.scrollWidth - track.clientWidth;
+    var pct = max > 0 ? track.scrollLeft / max : 0;
+    var stageWidth = window.innerWidth;
+    var travel = Math.max(0, stageWidth - 46 - 24 - CHASE_GAP_END); // keep both clear of the right edge, gap included
+    var chefX = 8 + pct * travel;
+    var gap = CHASE_GAP_END + (CHASE_GAP_START - CHASE_GAP_END) * (1 - pct); // dodo's lead shrinks toward a side-by-side gap, not zero
+    var dodoX = chefX + gap;
+    chaseDodo.style.setProperty("--tx", dodoX + "px");
+    chaseBurger.style.setProperty("--tx", dodoX + "px");
+    chaseChef.style.setProperty("--tx", chefX + "px");
+    // last panel: the chef finally catches the dodo -- it becomes dinner
+    var caught = pct >= CAUGHT_AT;
+    chaseDodo.classList.toggle("caught", caught);
+    chaseBurger.classList.toggle("caught", caught);
+  }
+
+  function findVScrollAncestor(el){
+    while(el && el !== track){
+      if(el.classList && el.classList.contains("panel-inner")) return el;
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  track.addEventListener("wheel", function(e){
+    if(Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; // native horizontal input, don't interfere
+    var vs = findVScrollAncestor(e.target);
+    if(vs){
+      var atTop = vs.scrollTop <= 0;
+      var atBottom = vs.scrollTop + vs.clientHeight >= vs.scrollHeight - 1;
+      if((e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom)) return; // let it scroll vertically inside this panel first
+    }
+    e.preventDefault();
+    track.scrollLeft += e.deltaY;
+  }, { passive: false });
+
+  track.addEventListener("scroll", updateProgress);
+  window.addEventListener("resize", updateProgress);
+  updateProgress();
+
+  // header height is fixed (position:fixed) but its own content can wrap to
+  // 2-3 lines on narrow viewports; --header-h is a static fallback, so measure
+  // the real thing and correct it -- otherwise panel content renders under
+  // the header on any width where it wraps
+  var headerEl = document.querySelector("header");
+  function updateHeaderHeight(){
+    document.documentElement.style.setProperty("--header-h", headerEl.offsetHeight + "px");
+  }
+  updateHeaderHeight();
+  window.addEventListener("resize", updateHeaderHeight);
+  if(window.ResizeObserver) new ResizeObserver(updateHeaderHeight).observe(headerEl);
+
+  function scrollToPanel(id){
+    var el = document.getElementById(id);
+    // scrollIntoView is unreliable here (lands short) when the target's
+    // scrollable ancestor also has nested scrollable descendants and
+    // scroll-snap active; a direct offsetLeft scroll is reliable.
+    if(el) track.scrollTo({ left: el.offsetLeft, behavior:"smooth" });
+  }
+
+  document.querySelectorAll('a[href^="#"]').forEach(function(a){
+    var id = a.getAttribute("href").slice(1);
+    if(!document.getElementById(id)) return;
+    a.addEventListener("click", function(e){
+      e.preventDefault();
+      scrollToPanel(id);
+    });
+  });
+
+  window.addEventListener("keydown", function(e){
+    if(e.key === "ArrowRight" || e.key === "PageDown"){
+      e.preventDefault();
+      track.scrollBy({ left: track.clientWidth, behavior:"smooth" });
+    } else if(e.key === "ArrowLeft" || e.key === "PageUp"){
+      e.preventDefault();
+      track.scrollBy({ left: -track.clientWidth, behavior:"smooth" });
+    } else if(e.key === "Home"){
+      e.preventDefault();
+      track.scrollTo({ left:0, behavior:"smooth" });
+    } else if(e.key === "End"){
+      e.preventDefault();
+      track.scrollTo({ left: track.scrollWidth, behavior:"smooth" });
+    }
+  });
+})();
+</script>
+<script type="module">
+  // Supabase project credentials -- these are the public "anon" key and URL,
+  // safe to expose client-side (Row Level Security governs actual data access).
+  // Fill in from your Supabase project's Settings -> API page.
+  var SUPABASE_URL = "REPLACE_WITH_SUPABASE_URL";
+  var SUPABASE_ANON_KEY = "REPLACE_WITH_SUPABASE_ANON_KEY";
+
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+  window.supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  window.dispatchEvent(new Event("supabase-ready"));
+</script>
+<script>
+(function(){
+  "use strict";
+  var label = document.getElementById("authLabel");
+  var msg = document.getElementById("authMsg");
+  var form = document.getElementById("authForm");
+  var logoutBtn = document.getElementById("logoutBtn");
+  var supabase;
+
+  function setLoggedIn(email){
+    label.textContent = email;
+    form.style.display = "none";
+    logoutBtn.style.display = "block";
+  }
+  function setLoggedOut(){
+    label.textContent = "Log in";
+    form.style.display = "";
+    logoutBtn.style.display = "none";
+    form.reset();
+  }
+
+  logoutBtn.addEventListener("click", function(){
+    supabase.auth.signOut();
+    document.getElementById("authBox").removeAttribute("open");
+  });
+
+  form.addEventListener("submit", function(e){
+    e.preventDefault();
+    var mode = e.submitter ? e.submitter.getAttribute("data-mode") : "login";
+    var email = document.getElementById("authEmail").value;
+    var password = document.getElementById("authPassword").value;
+    msg.textContent = "…";
+    var call = mode === "signup"
+      ? supabase.auth.signUp({ email: email, password: password })
+      : supabase.auth.signInWithPassword({ email: email, password: password });
+    call.then(function(res){
+      if (res.error) { msg.textContent = res.error.message; return; }
+      if (mode === "signup" && !res.data.session) {
+        msg.textContent = "Check your email to confirm your account.";
+        return;
+      }
+      msg.textContent = "Signed in.";
+      document.getElementById("authBox").removeAttribute("open");
+    }).catch(function(){ msg.textContent = "Network error — is Supabase reachable?"; });
+  });
+
+  function init(){
+    supabase = window.supabaseClient;
+    supabase.auth.getSession().then(function(res){
+      var session = res.data.session;
+      if (session) setLoggedIn(session.user.email); else setLoggedOut();
+    });
+    supabase.auth.onAuthStateChange(function(event, session){
+      if (session) setLoggedIn(session.user.email); else setLoggedOut();
+    });
+  }
+  if (window.supabaseClient) init(); else window.addEventListener("supabase-ready", init, { once: true });
+})();
+</script>
