@@ -1176,8 +1176,8 @@
   // Supabase project credentials -- these are the public "anon" key and URL,
   // safe to expose client-side (Row Level Security governs actual data access).
   // Fill in from your Supabase project's Settings -> API page.
-  var SUPABASE_URL = "REPLACE_WITH_SUPABASE_URL";
-  var SUPABASE_ANON_KEY = "REPLACE_WITH_SUPABASE_ANON_KEY";
+  var SUPABASE_URL = "https://dwbcpgamzavjejajypgz.supabase.co";
+  var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3YmNwZ2FtemF2amVqYWp5cGd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMzU0NTQsImV4cCI6MjEwNTgxMTQ1NH0.xYpeG1KQf9EIJ6vz-UDjLyvabLJOOOb01O6ryj8lElg";
 
   import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
   window.supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
