@@ -1,5 +1,7 @@
 # Dodo Burgers
 
+**Live site: https://dodo-burgers-vercel-supabase.vercel.app/**
+
 A single-page, single-file website for **Dodo Burgers** — a fictional Singapore burger restaurant built around a whimsical premise: the dodo didn't go extinct in 1681, it quietly evolved into an aquatic species and was rediscovered in 2019 in the shallows off Singapore's Tuas reclaimed land.
 
 The site is a complete, self-contained deliverable: no build step, no framework, no dependencies. Open `index.html` in a browser and it runs.
