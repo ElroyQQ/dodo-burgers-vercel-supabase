@@ -27,6 +27,7 @@ Differentiates from a generic burger-site template two ways: (1) a whimsical bra
 - Cart is in-memory JavaScript state only — resets on reload, not shared between visitors. "Send to kitchen" clears the cart and shows a toast; it does not submit anywhere or process payment. This is by design, not a gap to close.
 - No automated test suite exists; the composition rules around cart/build totals are currently verified by manual/visual checks only.
 - No build step, bundler, or external JS framework is introduced — plain HTML/CSS/JS stays the delivery format. The `supabase-js` client is the one exception, loaded at runtime via CDN `<script type="module">` rather than installed as a package.
+- **CI-only dev tooling (added 2026-09-25)**: `package.json`/`package-lock.json` exist solely for GitHub Actions (`htmlhint` for lint, Playwright for a smoke-test suite, plus a small Node script that checks every `images/...` reference in `index.html` resolves to a real file). None of this ships to the deployed site or is needed to run it locally — `npm install` is only relevant if you want to run CI checks yourself.
 - **Exception, added 2026-09-24**: the "Find the shop" panel embeds a live OpenStreetMap iframe (the site's first and only external network dependency). Chosen over Google Maps to avoid an API key and Google's branding/tracking. The panel's address/hours/directions text is not inside the iframe and stays fully readable if the map fails to load or is blocked; a plain "Open in OpenStreetMap" link is provided as a fallback.
 
 ## Brand Commitments

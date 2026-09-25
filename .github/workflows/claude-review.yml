@@ -1,0 +1,47 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+# Requires a repo secret named ANTHROPIC_API_KEY (Settings -> Secrets and
+# variables -> Actions -> New repository secret), from console.anthropic.com.
+# Without it, this workflow will fail -- delete this file if you don't want
+# automated PR review yet.
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Claude Code Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          track_progress: true
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Perform a focused code review of this PR's diff. This repo is a
+            static HTML/CSS/JS site (no framework, no build step) with
+            Supabase Auth integration. Focus on:
+            - Correctness bugs
+            - Security issues (especially anything touching auth, secrets,
+              or user input handling)
+            - Simplification/reuse opportunities
+            - Whether docs (README.md/CLAUDE.md/PRODUCT.md) need updating
+              to match the change
+
+            Use `gh pr comment` for a top-level summary.
+            Use `mcp__github_inline_comment__create_inline_comment` for
+            specific line-by-line issues.
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
