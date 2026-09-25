@@ -4,10 +4,12 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
-# Requires a repo secret named ANTHROPIC_API_KEY (Settings -> Secrets and
-# variables -> Actions -> New repository secret), from console.anthropic.com.
-# Without it, this workflow will fail -- delete this file if you don't want
-# automated PR review yet.
+# Requires two things, verified against an actual failed run (not guessed):
+# 1. The Claude GitHub App installed on this repo: https://github.com/apps/claude
+# 2. A repo secret named ANTHROPIC_API_KEY (Settings -> Secrets and
+#    variables -> Actions -> New repository secret), from console.anthropic.com.
+# Without both, this job fails with "Claude Code is not installed on this
+# repository." Delete this file if you don't want automated PR review yet.
 jobs:
   review:
     runs-on: ubuntu-latest
