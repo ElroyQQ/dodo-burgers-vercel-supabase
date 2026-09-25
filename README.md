@@ -97,8 +97,12 @@ This variant has real, working authentication — the one part of the site that 
 
 - Sign up / log in from the account widget in the header.
 - Sessions persist across reloads (Supabase manages this itself).
-- To run your own copy, create a free [Supabase](https://supabase.com) project and paste its URL + anon key into the placeholders near the top of the auth `<script type="module">` block in `index.html`.
+- To run your own copy, create a free [Supabase](https://supabase.com) project, paste its URL + anon key into the placeholders near the top of the auth `<script type="module">` block in `index.html`, and run `supabase/migrations/0001_orders.sql` once in the Supabase SQL Editor (needed for the order/pickup feature below).
 - To see a signed-up account, go to the Supabase dashboard → **Authentication → Users**. To see the password hash (bcrypt, managed entirely by Supabase), use the **SQL Editor**: `select id, email, encrypted_password, created_at from auth.users;`
+
+### Orders and pickup (real, not simulated)
+
+Once logged in, "Send to kitchen — request pickup" places a real order: it's written to a `public.orders` table (protected by Row-Level Security, so each user only ever sees their own), survives logout/login, and carries an estimated pickup time (8 minutes + 2 minutes per cart line, capped at 25). A header widget shows the active order's status and ETA; once the ETA passes, the site flips it to "ready" and shows a pop-up banner — checked every 15 seconds while the tab is open (there's no backend push notification, so it won't fire if the tab is closed). "Mark as picked up" closes it out. Guests get prompted to log in when they try to order, with their cart preserved.
 
 ## Scope and limitations
 

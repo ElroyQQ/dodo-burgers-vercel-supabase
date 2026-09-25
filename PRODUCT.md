@@ -12,7 +12,7 @@ Site visitors browsing a fictional Singapore burger restaurant's website: people
 
 ## Product Purpose
 
-A complete, self-contained, single-file front-end demo of a burger restaurant's ordering experience: browse a menu, build a custom burger with a fully photo-driven ingredient picker and live running total, add items to a cart, and view a cart drawer with a "Send to kitchen" action. No real backend, payment, or order submission exists or is implied — the front-end experience itself is the deliverable.
+A complete, self-contained, single-file front-end demo of a burger restaurant's ordering experience: browse a menu, build a custom burger with a fully photo-driven ingredient picker and live running total, add items to a cart, and view a cart drawer with a "Send to kitchen — request pickup" action. **Added 2026-09-25**: order submission is now real, not simulated — a logged-in user's order is persisted server-side (Supabase), survives logout/login, carries a pickup ETA, and the site pops up a "ready for pickup" alert once that ETA passes. There is still no payment and no delivery — pickup only, like a fast-food mobile-order app.
 
 ## Positioning
 
@@ -24,7 +24,7 @@ Differentiates from a generic burger-site template two ways: (1) a whimsical bra
 
 ## Capabilities and Constraints
 
-- Cart is in-memory JavaScript state only — resets on reload, not shared between visitors. "Send to kitchen" clears the cart and shows a toast; it does not submit anywhere or process payment. This is by design, not a gap to close.
+- Cart is in-memory JavaScript state only until submitted — resets on reload, not shared between visitors. On "Send to kitchen — request pickup", a logged-in user's order becomes a real, persisted row (Supabase `orders` table, RLS-scoped to that user) with a computed pickup ETA (8 minutes base + 2 minutes per cart line, capped at 25); it survives logout/login and is only cleared when marked picked up. Placing an order requires being logged in — a guest is prompted to log in first, and their cart is preserved while they do. It still does not process payment or offer delivery.
 - No automated test suite exists; the composition rules around cart/build totals are currently verified by manual/visual checks only.
 - No build step, bundler, or external JS framework is introduced — plain HTML/CSS/JS stays the delivery format. The `supabase-js` client is the one exception, loaded at runtime via CDN `<script type="module">` rather than installed as a package.
 - **CI-only dev tooling (added 2026-09-25)**: `package.json`/`package-lock.json` exist solely for GitHub Actions (`htmlhint` for lint, Playwright for a smoke-test suite, plus a small Node script that checks every `images/...` reference in `index.html` resolves to a real file). None of this ships to the deployed site or is needed to run it locally — `npm install` is only relevant if you want to run CI checks yourself.
@@ -47,5 +47,5 @@ Differentiates from a generic burger-site template two ways: (1) a whimsical bra
 
 1. Every image stays a real, licensed photograph (one named, standing exception) even as the surrounding visual language changes — this is brand-level, not merely a style choice of the current look.
 2. The whimsical dodo backstory and Singaporean flavor voice are the brand; a redesign changes the frame the story is told in, not the story or the facts.
-3. No real backend, payment, or order-submission exists or should be implied more strongly than today's front-end-only demo.
+3. No payment or delivery exists or should be implied — pickup-only, no-payment stays the line. Order submission and pickup tracking themselves are real and persisted (added 2026-09-25), not simulated.
 4. Build-step-free delivery is non-negotiable — a redesign that requires a bundler or JS framework is out of scope. The `supabase-js` CDN import is the sanctioned exception for this variant's auth.
