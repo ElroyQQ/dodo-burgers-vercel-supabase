@@ -70,15 +70,26 @@ The one deliberate exception to the photo-only policy: the small burger graphic 
 
 It redraws on every change, but only the layer(s) that actually changed animate — the function diffs the new selection against the previous one, and just that layer pops in with a quick scale bounce plus a soft glow flash in the color of the option just picked (e.g. picking a red sauce flashes red). Everything unchanged stays static. An earlier version animated every layer on every change with a cumulative per-layer delay, which meant the top bun (last in the stack) could take over a second to appear after any click — it read as broken rather than snappy, hence the diff-based rewrite.
 
+## Accounts (login / signup)
+
+This variant has real, working authentication — the one part of the site that isn't just front-end simulation. It's a fork of [`dodo-burgers/`](https://github.com/ElroyQQ/dodo_burgers_POC), which does the same thing on Cloudflare Pages + D1 with hand-rolled password hashing; this one delegates entirely to **Supabase Auth**, called directly from the browser via `supabase-js` (loaded from `esm.sh`, no build step) — no serverless functions, no custom users table:
+
+- Sign up / log in from the account widget in the header.
+- Sessions persist across reloads (Supabase manages this itself).
+- To run your own copy, create a free [Supabase](https://supabase.com) project and paste its URL + anon key into the placeholders near the top of the auth `<script type="module">` block in `index.html`.
+- To see a signed-up account, go to the Supabase dashboard → **Authentication → Users**. To see the password hash (bcrypt, managed entirely by Supabase), use the **SQL Editor**: `select id, email, encrypted_password, created_at from auth.users;`
+
 ## Scope and limitations
 
-This is a front-end demo/prototype, not a working ordering system:
+Everything except login/signup is still a front-end demo/prototype, not a working ordering system:
 - The cart is in-memory JavaScript state — it resets on page reload and is not shared between visitors.
 - "Send to kitchen" clears the cart and shows a confirmation toast; it does not submit anywhere or process any payment.
-- There is no backend, no real menu/pricing system, and no real restaurant behind this — it's a fictional brand built for the exercise of designing and building a full interactive site.
+- There is no real menu/pricing system and no real restaurant behind this — it's a fictional brand built for the exercise of designing and building a full interactive site.
 
 ## Deployment
 
-The site is also published as a Claude Artifact for easy sharing/preview: https://claude.ai/artifact/UhUgz4eWVWqZ5nwshgQxX6 (private by default — only accessible to people it's been explicitly shared with).
+Live at **https://dodo-burgers-vercel-supabase.vercel.app/**, deployed via Vercel from this repo's `main` branch — no build command or output directory needed, it's served as static files as-is. Every other branch/PR gets its own Vercel preview deployment automatically.
 
-To host it for real, `index.html` plus the `images/` folder is everything that's needed — any static host (GitHub Pages, Netlify, S3, etc.) will work as-is, no build step required.
+The site is also published as a Claude Artifact for easy sharing/preview: https://claude.ai/artifact/UhUgz4eWVWqZ5nwshgQxX6 (private by default — only accessible to people it's been explicitly shared with). Note the Artifact version predates the Supabase auth feature.
+
+To host it yourself, `index.html` plus the `images/` folder is everything that's needed — any static host (Vercel, Netlify, GitHub Pages, S3, etc.) will work as-is, no build step required (aside from filling in your own Supabase credentials if you want auth to work).
