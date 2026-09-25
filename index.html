@@ -1228,6 +1228,7 @@
   document.getElementById("submitOrder").addEventListener("click", function(){
     if(cart.length === 0){ toast("Add something first"); return; }
     if (activeOrder){ toast("Finish your current order before starting another"); return; }
+    if (!window.supabaseClient){ toast("Supabase isn't configured for this demo"); return; }
     var btn = document.getElementById("submitOrder");
     btn.disabled = true;
     window.supabaseClient.auth.getSession().then(function(res){
@@ -1371,12 +1372,16 @@
   // Supabase project credentials -- these are the public "anon" key and URL,
   // safe to expose client-side (Row Level Security governs actual data access).
   // Fill in from your Supabase project's Settings -> API page.
-  var SUPABASE_URL = "https://dwbcpgamzavjejajypgz.supabase.co";
-  var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3YmNwZ2FtemF2amVqYWp5cGd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMzU0NTQsImV4cCI6MjEwNTgxMTQ1NH0.xYpeG1KQf9EIJ6vz-UDjLyvabLJOOOb01O6ryj8lElg";
+  var SUPABASE_URL = "REPLACE_WITH_SUPABASE_URL";
+  var SUPABASE_ANON_KEY = "REPLACE_WITH_SUPABASE_ANON_KEY";
 
   import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-  window.supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  window.dispatchEvent(new Event("supabase-ready"));
+  try {
+    window.supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    window.dispatchEvent(new Event("supabase-ready"));
+  } catch (e) {
+    console.warn("Supabase isn't configured -- fill in SUPABASE_URL/SUPABASE_ANON_KEY near the top of this script. Login and orders are disabled until then. (" + e.message + ")");
+  }
 </script>
 <script>
 (function(){

@@ -6,6 +6,20 @@ A single-page, single-file website for **Dodo Burgers** — a fictional Singapor
 
 The site is a complete, self-contained deliverable: no build step, no framework, no dependencies. Open `index.html` in a browser and it runs.
 
+## Deploy your own copy (Vercel + Supabase, your own accounts)
+
+This repo ships as a template — `index.html` has placeholder Supabase credentials, not live ones. To get your own working copy with your own login/signup/orders:
+
+1. **Fork or clone this repo.**
+2. **Create a Supabase project** at [supabase.com](https://supabase.com) (free tier is enough).
+3. In your Supabase project, go to **Settings → API** and copy the **Project URL** and **anon public key**.
+4. In `index.html`, find `var SUPABASE_URL = "REPLACE_WITH_SUPABASE_URL";` and `var SUPABASE_ANON_KEY = "REPLACE_WITH_SUPABASE_ANON_KEY";` (near the top of the auth `<script type="module">` block) and paste in your own values.
+5. In your Supabase project's **SQL Editor**, paste and run the contents of [`supabase/migrations/0001_orders.sql`](supabase/migrations/0001_orders.sql) — this creates the `orders` table the pickup feature needs.
+6. **Deploy to Vercel**: [vercel.com](https://vercel.com) → Add New → Project → import your fork. Framework preset **Other**, no build command, no output directory — it's static files. Deploy.
+7. That's it — your deployment now runs entirely against your own Supabase project. Nobody else's account, data, or orders are involved.
+
+If you skip step 4, the site still loads and browses fine — only login/signup/ordering are inert (a clear toast/console message says so, no crash).
+
 ## Quick start
 
 ```bash
@@ -97,7 +111,7 @@ This variant has real, working authentication — the one part of the site that 
 
 - Sign up / log in from the account widget in the header.
 - Sessions persist across reloads (Supabase manages this itself).
-- To run your own copy, create a free [Supabase](https://supabase.com) project, paste its URL + anon key into the placeholders near the top of the auth `<script type="module">` block in `index.html`, and run `supabase/migrations/0001_orders.sql` once in the Supabase SQL Editor (needed for the order/pickup feature below).
+- To run your own copy, see "Deploy your own copy" at the top of this file.
 - To see a signed-up account, go to the Supabase dashboard → **Authentication → Users**. To see the password hash (bcrypt, managed entirely by Supabase), use the **SQL Editor**: `select id, email, encrypted_password, created_at from auth.users;`
 
 ### Orders and pickup (real, not simulated)
