@@ -1,6 +1,6 @@
 # Dodo Burgers
 
-**Live site: https://dodo-burgers-vercel-supabase.vercel.app/**
+**Preview: https://dodo-burgers-vercel-supabase-git-docs-read-18ba0a-ai-upskilling.vercel.app/**
 
 A single-page, single-file website for **Dodo Burgers** — a fictional Singapore burger restaurant built around a whimsical premise: the dodo didn't go extinct in 1681, it quietly evolved into an aquatic species and was rediscovered in 2019 in the shallows off Singapore's Tuas reclaimed land.
 
@@ -96,7 +96,7 @@ Everything except login/signup is still a front-end demo/prototype, not a workin
 
 ## Deployment
 
-Live at **https://dodo-burgers-vercel-supabase.vercel.app/**, deployed via Vercel from this repo's `main` branch — no build command or output directory needed, it's served as static files as-is.
+Production deploys via Vercel from this repo's `main` branch — no build command or output directory needed, it's served as static files as-is. (Production URL intentionally not listed here — see the preview link at the top of this file.)
 
 **Preview deployments**: every other branch or open PR gets its own Vercel preview URL automatically — no manual step. Vercel's GitHub integration builds it on every push and posts the URL as a comment on the PR. The URL is derived from the branch name, e.g. branch `docs/readme-auth-and-deployment` deployed as `dodo-burgers-vercel-supabase-git-docs-read-18ba0a-ai-upskilling.vercel.app`. Previews use the exact same `index.html` (and the same Supabase project) as production — there's no separate staging config, so a signup on a preview creates a real account, same as on production. Preview URLs are only reachable while their branch still exists; once a PR merges and its branch is deleted, that URL stops resolving. (Deployment Protection is off for this project, so preview links are publicly viewable without a Vercel login — needed for sharing a preview with someone outside the team to review.)
 
