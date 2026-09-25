@@ -21,23 +21,29 @@ There is no npm install, no bundler, and no test suite — see [CLAUDE.md](CLAUD
 
 ## What's on the page
 
+The site is a single **horizontal-scroll** track of full-viewport panels (mouse wheel, trackpad swipe, and arrow/Page/Home/End keys all move sideways through it), not a normal vertical page:
+
 - **Hero** — headline, copy, and a composited photo of the dodo swimming at the Tuas waterfront at sunset.
+- **Find the shop** — address/hours and a live OpenStreetMap embed.
 - **"Why us, specifically"** — three short cards making the differentiation pitch (unique species, not a commodity, locally "reclaimed").
-- **Field log** — a short in-universe "declassified" backstory section.
+- **Field log** — a short in-universe "declassified" backstory section, styled as a dossier card.
 - **Menu** — four burgers, each with a real product photo, description, and an "Add to order" button that adds to the cart.
-- **Build Your Own** — fully photo-driven picker: click a photo of a patty/bun/sauce/topping to select it (single-select for patty/bun/sauce, multi-select for toppings), with a live running total and a summary panel.
 - **FAQ** — accordion, including a taste comparison to Singaporean dishes and a halal-certification question.
+- **Assemble your own Dodo** (Build Your Own) — fully photo-driven picker: click a photo of a patty/bun/sauce/topping to select it (single-select for patty/bun/sauce, multi-select for toppings), with a live running total and a summary panel side by side in the same viewport.
 - **Cart drawer** — slide-out panel with running total and a "Send to kitchen" action (front-end only — see [Scope and limitations](#scope-and-limitations)).
+- **Chase bar** — a fixed strip along the bottom with a chef icon chasing a dodo icon, sliding in lockstep with scroll progress; on reaching the last panel the dodo becomes a burger. Doubles as the site's progress indicator.
+
+There's no separate footer — legal/photo credits live in a small "Credits" disclosure in the fixed header instead.
 
 ## Design system
 
-- **Theme**: light/cream (`--paper` background, white `--card` surfaces), not dark mode. Teal (`--teal-700`) is the brand accent for links/labels; coral (`--coral-500`) is the call-to-action color.
-- **Type**: Fredoka (headings), Manrope (body), Space Mono (labels/prices/data), all loaded from Google Fonts.
-- **Imagery policy**: every image on the site is a real photograph, licensed for free/commercial use, edited as needed (cropped, color-graded, composited) — no illustrations or AI-generated imagery, with one deliberate exception: see [Your build preview](#your-build-preview) below. See [Image credits](#image-credits) for everything else.
+- **Theme**: dark navy (`#020b14`) and white/off-white bands, alternating section by section — not the light/cream look this project started with. One steel-blue accent (`#6699cc` / `#3f6f9c`) carries every button, link, and data point; no second accent color.
+- **Type**: Space Grotesk (hero headline), Manrope (body), Space Mono (labels/prices/data), all loaded from Google Fonts.
+- **Imagery policy**: every image on the site is a real photograph, licensed for free/commercial use, edited as needed (cropped, color-graded, composited) — no illustrations or AI-generated imagery, with two named exceptions: the animated SVG [builder preview](#your-build-preview) below, and the chase-bar's chef/dodo/burger icons. See [Image credits](#image-credits) for everything else, and [DESIGN.md](DESIGN.md) for the full design system.
 
 ## Image credits
 
-All photos are either [Pexels License](https://www.pexels.com/license/) (free for commercial use, no attribution legally required) or CC0 public domain. Credited here anyway as good practice; also summarized in the site footer.
+All photos are either [Pexels License](https://www.pexels.com/license/) (free for commercial use, no attribution legally required) or CC0 public domain. Credited here anyway as good practice; also summarized in the "Credits" disclosure in the site header.
 
 | File | Subject | Source | License |
 |---|---|---|---|
@@ -88,7 +94,9 @@ Everything except login/signup is still a front-end demo/prototype, not a workin
 
 ## Deployment
 
-Live at **https://dodo-burgers-vercel-supabase.vercel.app/**, deployed via Vercel from this repo's `main` branch — no build command or output directory needed, it's served as static files as-is. Every other branch/PR gets its own Vercel preview deployment automatically.
+Live at **https://dodo-burgers-vercel-supabase.vercel.app/**, deployed via Vercel from this repo's `main` branch — no build command or output directory needed, it's served as static files as-is.
+
+**Preview deployments**: every other branch or open PR gets its own Vercel preview URL automatically — no manual step. Vercel's GitHub integration builds it on every push and posts the URL as a comment on the PR. The URL is derived from the branch name, e.g. branch `docs/readme-auth-and-deployment` deployed as `dodo-burgers-vercel-supabase-git-docs-read-18ba0a-ai-upskilling.vercel.app`. Previews use the exact same `index.html` (and the same Supabase project) as production — there's no separate staging config, so a signup on a preview creates a real account, same as on production. Preview URLs are only reachable while their branch still exists; once a PR merges and its branch is deleted, that URL stops resolving. (Deployment Protection is off for this project, so preview links are publicly viewable without a Vercel login — needed for sharing a preview with someone outside the team to review.)
 
 The site is also published as a Claude Artifact for easy sharing/preview: https://claude.ai/artifact/UhUgz4eWVWqZ5nwshgQxX6 (private by default — only accessible to people it's been explicitly shared with). Note the Artifact version predates the Supabase auth feature.
 
