@@ -1,0 +1,13 @@
+{
+  "name": "dodo-burgers-vercel-supabase",
+  "private": true,
+  "description": "CI-only tooling (lint/test). The shipped site itself has zero dependencies and no build step.",
+  "scripts": {
+    "lint": "htmlhint index.html --config .htmlhintrc",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "htmlhint": "^1.1.4"
+  }
+}

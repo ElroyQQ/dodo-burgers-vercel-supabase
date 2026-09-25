@@ -19,7 +19,20 @@ python3 -m http.server 8000
 # then visit http://localhost:8000/index.html
 ```
 
-There is no npm install, no bundler, and no test suite — see [CLAUDE.md](CLAUDE.md) for the code architecture if you're editing this with an AI coding agent.
+There is no npm install needed to run the site — it's plain HTML/CSS/JS. See [CLAUDE.md](CLAUDE.md) for the code architecture if you're editing this with an AI coding agent.
+
+## CI
+
+Every push/PR runs lint (`htmlhint`), a build-equivalent check (confirms every `images/...` reference in `index.html` resolves to a real file), and a Playwright smoke test (page loads with no console errors, auth widget renders, menu/builder panels present — it deliberately doesn't call `supabase.auth.signUp`, since preview and production share one real Supabase project). Run them yourself with:
+
+```bash
+npm install
+npm run lint
+node scripts/check-assets.js
+npx playwright install --with-deps chromium && npm test
+```
+
+A `Claude Code Review` workflow also runs on every PR, but needs an `ANTHROPIC_API_KEY` repo secret added under Settings → Secrets and variables → Actions before it'll work.
 
 ## What's on the page
 
