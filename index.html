@@ -481,6 +481,49 @@
     transition:transform 0.3s ease; z-index:80; white-space:nowrap;
   }
   .toast.show{ transform:translate(-50%,0); }
+
+  .order-chip{ display:flex; align-items:center; gap:7px; }
+  .order-dot{
+    width:8px; height:8px; border-radius:999px; flex:none;
+    border:1.5px solid var(--accent-strong); background:transparent;
+    transition:background 0.2s;
+  }
+  .order-dot.is-ready{ background:var(--accent-strong); animation:order-pulse 1.6s ease-in-out infinite; }
+  @keyframes order-pulse{
+    0%, 100%{ box-shadow:0 0 0 0 rgba(63,111,156,0.35); }
+    50%{ box-shadow:0 0 0 5px rgba(63,111,156,0); }
+  }
+  .order-status-panel .items{ margin:0 0 10px; padding:0; list-style:none; }
+  .order-status-panel .items li{ display:flex; justify-content:space-between; gap:10px; padding:3px 0; }
+  .order-status-panel .eta{ font-family:'Space Mono',monospace; font-weight:700; color:var(--accent-text); }
+  .order-status-panel .state-label{
+    display:inline-block; font-family:'Space Mono',monospace; font-size:0.7rem;
+    letter-spacing:0.08em; text-transform:uppercase; color:var(--accent-text);
+    margin-bottom:8px;
+  }
+
+  .pickup-alert{
+    position:fixed; top:calc(var(--header-h) + 14px); left:50%; z-index:90;
+    width:min(420px, calc(100vw - 32px));
+    transform:translate(-50%, -20px); opacity:0; pointer-events:none;
+    transition:transform 0.3s cubic-bezier(0.16,1,0.3,1), opacity 0.3s ease;
+    background:var(--accent-strong); color:#fff; border-radius:14px;
+    box-shadow:var(--shadow); padding:16px 18px;
+  }
+  .pickup-alert.show{ transform:translate(-50%, 0); opacity:1; pointer-events:auto; }
+  .pickup-alert .head{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .pickup-alert .title{ font-weight:700; font-size:0.98rem; margin:0 0 4px; }
+  .pickup-alert .sub{ font-size:0.82rem; color:rgba(255,255,255,0.85); margin:0; }
+  .pickup-alert .dismiss{
+    background:none; border:none; color:rgba(255,255,255,0.8); cursor:pointer;
+    font-size:1.1rem; line-height:1; padding:2px;
+  }
+  .pickup-alert .actions{ margin-top:12px; }
+  .pickup-alert .actions .btn{
+    background:#fff; color:var(--accent-strong); border-radius:999px;
+    padding:9px 18px; font-size:0.82rem; font-weight:700; border:none; cursor:pointer;
+  }
+  .pickup-alert .actions .btn:hover{ background:rgba(255,255,255,0.9); }
 </style>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -520,6 +563,17 @@
           <p id="authMsg" style="margin-top:8px;"></p>
         </form>
         <button type="button" id="logoutBtn" class="btn btn-ghost" style="display:none;width:100%;padding:8px;font-size:0.78rem;">Log out</button>
+      </div>
+    </details>
+    <details class="credits" id="orderStatusBox" style="display:none;">
+      <summary>
+        <span class="order-chip"><span class="order-dot" id="orderDot"></span><span id="orderChipLabel">Order</span></span>
+      </summary>
+      <div class="credits-panel order-status-panel">
+        <span class="state-label" id="orderStateLabel">Preparing</span>
+        <ul class="items" id="orderItems"></ul>
+        <p style="margin:0 0 10px;">Ready by <span class="eta" id="orderEta">--:--</span></p>
+        <button type="button" class="btn btn-primary" id="markPickedUp" style="width:100%;padding:8px;font-size:0.78rem;display:none;">Mark as picked up</button>
       </div>
     </details>
     <button class="cart-btn" id="openCart" aria-haspopup="true" aria-controls="cartDrawer">
@@ -737,10 +791,22 @@
   <ul id="cartItems"></ul>
   <div class="drawer-foot">
     <div class="drawer-total"><span>Total</span><span class="n" id="cartTotal">$0.00</span></div>
-    <button class="btn btn-primary submit-btn" id="submitOrder">Send to kitchen</button>
+    <button class="btn btn-primary submit-btn" id="submitOrder">Send to kitchen — request pickup</button>
   </div>
 </aside>
 <div class="toast" id="toast"></div>
+<div class="pickup-alert" id="pickupAlert" role="alert">
+  <div class="head">
+    <div>
+      <p class="title">Your order's ready</p>
+      <p class="sub">Swing by the counter whenever suits.</p>
+    </div>
+    <button type="button" class="dismiss" id="dismissPickupAlert" aria-label="Dismiss">&times;</button>
+  </div>
+  <div class="actions">
+    <button type="button" class="btn" id="alertMarkPickedUp">Mark as picked up</button>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -1061,12 +1127,137 @@
     openDrawer();
   });
 
+  // ---------- persistent pickup orders (Supabase) ----------
+  var activeOrder = null;
+  var orderPollTimer = null;
+
+  function fmtTime(iso){
+    return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function renderOrderStatus(){
+    var box = document.getElementById("orderStatusBox");
+    if (!activeOrder){ box.style.display = "none"; return; }
+    box.style.display = "";
+
+    var isReady = activeOrder.status === "ready";
+    document.getElementById("orderDot").classList.toggle("is-ready", isReady);
+    document.getElementById("orderChipLabel").textContent = isReady ? "Ready" : "Preparing";
+    document.getElementById("orderStateLabel").textContent = isReady ? "Ready for pickup" : "Preparing";
+    document.getElementById("orderEta").textContent = fmtTime(activeOrder.estimated_ready_at);
+    document.getElementById("orderItems").innerHTML = activeOrder.items.map(function(it){
+      return "<li><span>" + it.name + "</span><span class=\"mono\">" + money(it.price) + "</span></li>";
+    }).join("");
+    document.getElementById("markPickedUp").style.display = isReady ? "block" : "none";
+  }
+
+  function showPickupAlert(){
+    document.getElementById("pickupAlert").classList.add("show");
+  }
+  function hidePickupAlert(){
+    document.getElementById("pickupAlert").classList.remove("show");
+  }
+
+  function checkOrderReady(){
+    if (!activeOrder || activeOrder.status !== "preparing") return;
+    if (Date.now() < new Date(activeOrder.estimated_ready_at).getTime()) return;
+    window.supabaseClient.from("orders").update({ status: "ready" }).eq("id", activeOrder.id)
+      .then(function(){
+        activeOrder.status = "ready";
+        renderOrderStatus();
+        showPickupAlert();
+      });
+  }
+
+  function startOrderPolling(){
+    if (orderPollTimer) return;
+    orderPollTimer = setInterval(checkOrderReady, 15000);
+  }
+  function stopOrderPolling(){
+    clearInterval(orderPollTimer);
+    orderPollTimer = null;
+  }
+
+  function fetchActiveOrder(userId){
+    window.supabaseClient.from("orders").select("*")
+      .eq("user_id", userId).neq("status", "picked_up")
+      .order("created_at", { ascending: false }).limit(1)
+      .then(function(res){
+        activeOrder = (res.data && res.data[0]) || null;
+        renderOrderStatus();
+        if (activeOrder){
+          checkOrderReady();
+          startOrderPolling();
+        } else {
+          stopOrderPolling();
+        }
+      });
+  }
+
+  function markPickedUp(){
+    if (!activeOrder) return;
+    var id = activeOrder.id;
+    window.supabaseClient.from("orders")
+      .update({ status: "picked_up", picked_up_at: new Date().toISOString() })
+      .eq("id", id)
+      .then(function(){
+        activeOrder = null;
+        renderOrderStatus();
+        hidePickupAlert();
+        stopOrderPolling();
+        toast("Enjoy your Dodo Burger!");
+      });
+  }
+
+  document.getElementById("markPickedUp").addEventListener("click", markPickedUp);
+  document.getElementById("alertMarkPickedUp").addEventListener("click", markPickedUp);
+  document.getElementById("dismissPickupAlert").addEventListener("click", hidePickupAlert);
+
+  window.addEventListener("dodo-auth", function(e){
+    var session = e.detail.session;
+    if (session){
+      fetchActiveOrder(session.user.id);
+    } else {
+      activeOrder = null;
+      renderOrderStatus();
+      hidePickupAlert();
+      stopOrderPolling();
+    }
+  });
+
   document.getElementById("submitOrder").addEventListener("click", function(){
     if(cart.length === 0){ toast("Add something first"); return; }
-    toast("Order sent to the kitchen — thank you!");
-    cart = [];
-    renderCart();
-    setTimeout(closeDrawer, 900);
+    if (activeOrder){ toast("Finish your current order before starting another"); return; }
+    var btn = document.getElementById("submitOrder");
+    btn.disabled = true;
+    window.supabaseClient.auth.getSession().then(function(res){
+      var session = res.data.session;
+      if (!session){
+        btn.disabled = false;
+        toast("Log in to request pickup");
+        document.getElementById("authBox").setAttribute("open", "");
+        return;
+      }
+      var etaMinutes = Math.min(25, 8 + cart.length * 2);
+      var estimatedReadyAt = new Date(Date.now() + etaMinutes * 60000).toISOString();
+      var total = cart.reduce(function(sum, e){ return sum + e.price; }, 0);
+      window.supabaseClient.from("orders").insert({
+        user_id: session.user.id,
+        items: cart,
+        total: total,
+        estimated_ready_at: estimatedReadyAt
+      }).select().then(function(res2){
+        btn.disabled = false;
+        if (res2.error){ toast("Couldn't place your order — try again"); return; }
+        activeOrder = res2.data[0];
+        renderOrderStatus();
+        startOrderPolling();
+        toast("Order placed — ready by " + fmtTime(estimatedReadyAt));
+        cart = [];
+        renderCart();
+        setTimeout(closeDrawer, 900);
+      });
+    });
   });
 
   renderMenu();
@@ -1233,14 +1424,20 @@
     }).catch(function(){ msg.textContent = "Network error — is Supabase reachable?"; });
   });
 
+  function announce(session){
+    window.dispatchEvent(new CustomEvent("dodo-auth", { detail: { session: session } }));
+  }
+
   function init(){
     supabase = window.supabaseClient;
     supabase.auth.getSession().then(function(res){
       var session = res.data.session;
       if (session) setLoggedIn(session.user.email); else setLoggedOut();
+      announce(session);
     });
     supabase.auth.onAuthStateChange(function(event, session){
       if (session) setLoggedIn(session.user.email); else setLoggedOut();
+      announce(session);
     });
   }
   if (window.supabaseClient) init(); else window.addEventListener("supabase-ready", init, { once: true });

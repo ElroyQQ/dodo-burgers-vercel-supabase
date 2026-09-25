@@ -34,3 +34,14 @@ test("menu and builder panels are present", async ({ page }) => {
   await expect(page.locator("#menu")).toBeAttached();
   await expect(page.locator("#builder")).toBeAttached();
 });
+
+// Placing an order requires being logged in (orders are persisted per-user in
+// Supabase). This checks the gate, not the real order-placement call -- see
+// tests/smoke.spec.js's top-of-file note on why we never call the real auth API here.
+test("requesting pickup as a guest prompts login instead of ordering", async ({ page }) => {
+  await page.goto("/index.html");
+  await page.locator(".add-btn").first().click();
+  await page.locator("#openCart").click();
+  await page.locator("#submitOrder").click();
+  await expect(page.locator("#authBox")).toHaveJSProperty("open", true);
+});

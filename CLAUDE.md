@@ -20,6 +20,18 @@ The Cloudflare version has its own D1-backed users table, PBKDF2 hashing, and ha
 
 No `wrangler.toml`, `schema.sql`, `_headers`, or `functions/` directory exists in this folder — they were intentionally not copied from the original, since none of them apply here.
 
+## Persistent pickup orders (added 2026-09-25)
+
+Logged-in users can place a real, persisted order — not just simulate one. This is the one part of the site with an actual database table (`public.orders`, migration in `supabase/migrations/0001_orders.sql`, RLS-scoped to `auth.uid() = user_id`). Flow, all in the first `<script>` block (which owns `cart`/`renderCart`/`toast`) plus one cross-script hook from the auth script:
+
+- The auth script (`<script type="module">`) dispatches a `window` custom event `dodo-auth` with `{ session }` on every login/logout/session-restore, so the cart script can react without the two scripts sharing scope.
+- `submitOrder` click: requires a session (prompts login + preserves cart if not); on success, inserts a row with `items` (the cart array as-is, jsonb), `total`, and a computed `estimated_ready_at` (8 min + 2 min/line, capped 25).
+- A header `<details>` widget (`#orderStatusBox`, same disclosure pattern as `#authBox`/Credits) shows the active order's state, items, and ETA; polls every 15s (`setInterval`) to flip status to `ready` once the ETA passes, and shows a persistent `.pickup-alert` banner (distinct from the ephemeral `.toast`) until dismissed or marked picked up.
+- "Mark as picked up" clears `activeOrder` client-side and sets `status='picked_up'` server-side — the row isn't deleted, just excluded from the "active order" query (`.neq("status", "picked_up")`), so order history remains in the table.
+- There is no backend cron or push notification — "ready" is determined by the browser's own clock comparing against `estimated_ready_at`, checked on load and every 15s while the tab is open. It will not notify if the tab is closed.
+
+If asked to touch this again: don't add a second Supabase table or duplicate the auth session logic — reuse the `dodo-auth` event and the existing RLS-scoped `orders` table.
+
 ## Architecture
 
 Everything is inline in `index.html`, in three blocks in this order:
